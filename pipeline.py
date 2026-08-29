@@ -1,3 +1,4 @@
+#pipeline.py
 from .classifier import Classifier
 from .level_detector import LevelDetector
 from .template_manager import TemplateManager
