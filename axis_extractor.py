@@ -1,3 +1,4 @@
+#axis_extractor.py
 def extract_axis_weights(text, features):
     """
     Semantic Axes（意味軸）の重みを抽出する。

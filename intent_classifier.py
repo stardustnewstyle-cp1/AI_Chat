@@ -1,3 +1,4 @@
+#intent_classifier.py
 def extract_features(self, text, source_bias):
     """
     Intent Layer の特徴量抽出。
