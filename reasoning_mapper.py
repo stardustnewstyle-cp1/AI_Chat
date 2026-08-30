@@ -1,3 +1,4 @@
+#reasoning_mapper.py
 def map_axis_to_reasoning(axis_weight):
     """
     最も強い軸から推論タイプを決定する。
