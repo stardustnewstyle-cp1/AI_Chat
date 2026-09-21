@@ -1,7 +1,5 @@
-# intent_layer.py
-
 # ============================
-# SAMLRM — Intent Layer
+# SAMLRM — Intent Layer.py
 # ============================
 
 # --- 1. 意味軸（10軸） ---
@@ -20,6 +18,48 @@ SEMANTIC_AXES = {
 
 def init_axes():
     return {axis: 0.0 for axis in SEMANTIC_AXES}
+
+
+# --- 追加①：技術質問判定 ---
+def is_technical(text: str) -> bool:
+    tech_keywords = [
+        "api", "関数", "コード", "python", "javascript",
+        "エラー", "例外", "最適化", "設計", "アルゴリズム",
+        "クラス", "メソッド", "ライブラリ", "フレームワーク",
+        "引数", "戻り値", "型", "オブジェクト", "インスタンス"
+    ]
+    t = text.lower()
+    return any(k in t for k in tech_keywords)
+
+
+# --- 追加②：技術回答用の意味軸 ---
+def extract_technical_axes(text: str) -> dict:
+    axes = {
+        "code": 0.0,
+        "example": 0.0,
+        "explain": 0.0,
+        "notes": 0.0,
+        "design": 0.0
+    }
+
+    t = text.lower()
+
+    if "コード" in t or "書いて" in t or "実装" in t:
+        axes["code"] = 0.9
+
+    if "例" in t or "サンプル" in t or "example" in t:
+        axes["example"] = 0.7
+
+    if "説明" in t or "どういう" in t or "why" in t:
+        axes["explain"] = 0.6
+
+    if "注意" in t or "気をつけ" in t:
+        axes["notes"] = 0.5
+
+    if "設計" in t or "構造" in t or "architecture" in t:
+        axes["design"] = 0.8
+
+    return axes
 
 
 # --- 2. 推論タイプ（8種類） ---
@@ -72,13 +112,8 @@ def compute_final_vector(direction_intent):
 
 # --- 7-1. analyze_input（意味軸スコア抽出） ---
 def analyze_input(user_input: str, axes: dict) -> dict:
-    """
-    入力テキストから意味軸ごとのスコアを簡易に抽出する。
-    キーワード＋構造でスコアを加算する。
-    """
     text = user_input.lower()
 
-    # キーワードベースの簡易ルール
     if any(k in text for k in ["構造", "structure", "章立て", "セクション"]):
         axes["structure"] += 1.0
         axes["organization"] += 0.5
@@ -118,10 +153,6 @@ def analyze_input(user_input: str, axes: dict) -> dict:
 
 # --- 7-2. classify_reasoning（推論タイプ分類） ---
 def classify_reasoning(user_input: str) -> str:
-    """
-    入力テキストから推論タイプを決める。
-    compare / improve / explain / organize / procedure / design などに近い分類。
-    """
     text = user_input.lower()
 
     if any(k in text for k in ["比較", "difference", "vs", "どっち", "違い"]):
@@ -148,16 +179,11 @@ def classify_reasoning(user_input: str) -> str:
     if any(k in text for k in ["選ぶ", "選択", "どれ", "select"]):
         return "selective"
 
-    return "structural"  # デフォルトは構造寄り
+    return "structural"
 
 
 # --- 7-3. is_ambiguous（曖昧判定） ---
 def is_ambiguous(user_input: str) -> bool:
-    """
-    曖昧かどうかを判定する。
-    - 「なんでも」「適当に」などの曖昧語
-    - 質問が漠然としている
-    """
     text = user_input.lower()
 
     vague_patterns = [
@@ -172,7 +198,6 @@ def is_ambiguous(user_input: str) -> bool:
     if any(p in text for p in vague_patterns):
         return True
 
-    # 文字数が極端に短い場合も曖昧とみなす
     if len(text.strip()) < 5:
         return True
 
@@ -181,27 +206,23 @@ def is_ambiguous(user_input: str) -> bool:
 
 # --- 7. Intent Layer（完成版） ---
 def intent_layer(user_input):
-    # 1. 意味軸初期化
     axes = init_axes()
-
-    # 2. 意味解析
     axes = analyze_input(user_input, axes)
-
-    # 3. 推論タイプ分類
     reasoning_type = classify_reasoning(user_input)
-
-    # 4. direction_intent の生成
     direction = compute_direction_intent(axes, reasoning_type)
 
-    # 5. 曖昧補正
     if is_ambiguous(user_input):
         direction = apply_fallback(direction)
 
-    # 6. final_vector の生成
     final = compute_final_vector(direction)
 
+    technical = is_technical(user_input)
+    axes_tech = extract_technical_axes(user_input) if technical else {}
+
     return {
+        "technical": technical,
         "axes": axes,
+        "axes_tech": axes_tech,
         "reasoning_type": reasoning_type,
         "direction": direction,
         "final_vector": final,

@@ -1,4 +1,6 @@
-# pipeline.py
+# ============================================
+# article_pipeline.py（ArticlePipeline + Intent Layer 統合版）
+# ============================================
 
 from .classifier import Classifier
 from .level_detector import LevelDetector
@@ -8,8 +10,10 @@ from .evaluator import Evaluator
 from .improver import Improver
 from .validity import ValidityChecker
 
-# Intent Layer + Reasoning Layer + Knowledge Layer
+# Intent Layer（意味解析）
 from intent_layer import intent_layer
+
+# 既存の技術推論パイプライン（記事では使わない）
 from improver_pipeline import ImproverPipeline
 
 
@@ -24,39 +28,51 @@ class ArticlePipeline:
         self.improver = Improver()
         self.validity = ValidityChecker()
 
-        # 新規：Intent Layer + Reasoning Layer 統合パイプライン
+        # 技術推論は記事では使わないが残しておく
         self.reasoning_core = ImproverPipeline()
 
     def run(self, article: str) -> dict:
         """
-        Intent Layer → Technical Reasoning → Knowledge Layer を統合した
-        新型の「脳を持つ」記事処理パイプライン
+        Intent Layer を追加して精度向上した記事処理パイプライン
         """
 
-        # --- 1. Intent Layer + Reasoning Layer + Knowledge Layer ---
-        reasoning_bundle = self.reasoning_core.reasoning(article)
+        # --- 1. Intent Layer（意味解析） ---
+        intent = intent_layer(article)
 
-        intent = reasoning_bundle["intent"]
         reasoning_type = intent["reasoning_type"]
+        axes = intent["axes"]
         final_vector = intent["final_vector"]
 
-        # --- 2. 分類（Intent を使って精度向上可能） ---
-        category = self.classifier.classify(article)
+        # --- 2. 分類（Intent の意味軸を補助に使う） ---
+        category = self.classifier.classify(article, axes=axes)
 
-        # --- 3. レベル判定 ---
-        level = self.level_detector.detect(article)
+        # --- 3. レベル判定（構造軸が強いとレベル判定精度が上がる） ---
+        level = self.level_detector.detect(article, reasoning_type=reasoning_type)
 
-        # --- 4. テンプレート選択（推論タイプを考慮可能） ---
-        template = self.template_manager.select(category, level)
+        # --- 4. テンプレート選択（推論タイプを考慮） ---
+        template = self.template_manager.select(category, level, reasoning_type=reasoning_type)
 
-        # --- 5. 要約 ---
-        summary = self.summarizer.summarize(article, template)
+        # --- 5. 要約（意味軸に応じて要約スタイルを変える） ---
+        summary = self.summarizer.summarize(
+            article,
+            template,
+            axes=axes,
+            reasoning_type=reasoning_type
+        )
 
         # --- 6. 評価（Intent Layer の情報を使って改善可能） ---
-        evaluation = self.evaluator.evaluate(article)
+        evaluation = self.evaluator.evaluate(
+            article,
+            axes=axes,
+            reasoning_type=reasoning_type
+        )
 
-        # --- 7. 改善案（Teacher Layer の入力になる） ---
-        improvement = self.improver.improve(article)
+        # --- 7. 改善案（意味軸に応じて改善ポイントを変える） ---
+        improvement = self.improver.improve(
+            article,
+            axes=axes,
+            reasoning_type=reasoning_type
+        )
 
         # --- 8. 妥当性チェック ---
         is_valid = self.validity.check(article)
@@ -64,8 +80,6 @@ class ArticlePipeline:
         # --- 9. 統合結果を返す ---
         return {
             "intent": intent,
-            "technical_reasoning": reasoning_bundle["technical_reasoning"],
-            "search_queries": reasoning_bundle["search_queries"],
             "category": category,
             "level": level,
             "template": template,

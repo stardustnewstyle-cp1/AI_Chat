@@ -1,4 +1,44 @@
+# ============================================
+# Reasoning_Layer.py（Intent Layer → Code Generator 統合版）
+# ============================================
+
 class ReasoningLayer:
+
+    # Intent Layer → Code Generator のマッピング
+    INTENT_MAP = {
+        "structural": "design",
+        "procedural": "design",
+        "conceptual": "design",
+        "organizational": "design",
+
+        "comparative": "compare",
+        "improvement": "improve",
+        "causal": "debug",
+        "selective": "optimize",
+    }
+
+    def select_code_intent(self, reasoning_type):
+        """
+        Intent Layer の reasoning_type を
+        Code Generator の intent_type に変換する。
+        """
+        return self.INTENT_MAP.get(reasoning_type, "design")
+
+    # =========================================================
+    # Intent Layer の出力（intent_result）からコード生成する統合関数
+    # =========================================================
+    def generate_from_intent(self, api_info, intent_result):
+        """
+        intent_result = intent_layer(user_input) の返り値
+        ここから intent_type を決めて generate_code を呼ぶ
+        """
+        reasoning_type = intent_result["reasoning_type"]
+        intent_type = self.select_code_intent(reasoning_type)
+        return self.generate_code(api_info, intent_type)
+
+    # =========================================================
+    # 既存のコード生成ロジック（君のコードをそのまま統合）
+    # =========================================================
 
     def generate_code(self, api_info, intent_type):
         if intent_type == "design":
