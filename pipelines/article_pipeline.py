@@ -7,11 +7,11 @@ from .level_detector import LevelDetector
 from .template_manager import TemplateManager
 from .summarizer import Summarizer
 from .evaluator import Evaluator
-from .improver import Improver
+from ..intent_layer.improver import Improver
 from .validity import ValidityChecker
 
 # Intent Layer（意味解析）
-from intent_layer import intent_layer
+from intent_layer.intent_layer import intent_layer
 
 # 既存の技術推論パイプライン（記事では使わない）
 from improver_pipeline import ImproverPipeline

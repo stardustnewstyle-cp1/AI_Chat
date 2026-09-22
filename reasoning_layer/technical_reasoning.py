@@ -1,7 +1,7 @@
 # technical_reasoning.py
 
 from typing import Dict, Any
-from intent_keywords import ALL_KEYWORDS
+from intent_layer.intent_keywords import ALL_KEYWORDS
 
 
 class TechnicalReasoner:

@@ -3,9 +3,9 @@
 # SAMLRM — Intent → Reasoning → Code → Teacher Router
 # ============================================
 
-from intent_layer import intent_layer
-from reasoning_layer import ReasoningLayer
-from teacher_layer import TeacherLayer
+from intent_layer.intent_layer import intent_layer
+from reasoning_layer.reasoning_layer import ReasoningLayer
+from teacher_layer.teacher_layer import TeacherLayer
 
 class IntentReasoningRouter:
 

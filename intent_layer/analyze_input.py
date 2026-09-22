@@ -2,8 +2,8 @@
 
 from intent_layer.feature_extractor import extract_features as dict_extract
 from intent_layer.feature_loader import FEATURE_GROUPS
-from semantic_axes import classify_axes
-from axis_extractor import extract_axis_weights as simple_axes
+from intent_layer.semantic_axes import classify_axes
+from intent_layer.axis_extractor import extract_axis_weights as simple_axes
 
 def analyze_input(text: str, axes: dict) -> dict:
     # 1. semantic_axes.json の軸検出
