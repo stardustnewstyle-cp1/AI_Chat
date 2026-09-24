@@ -2,18 +2,20 @@
 # article_pipeline.py（ArticlePipeline + Intent Layer 統合版）
 # ============================================
 
-from .classifier import Classifier
-from .level_detector import LevelDetector
-from .template_manager import TemplateManager
-from .summarizer import Summarizer
-from .evaluator import Evaluator
-from ..intent_layer.improver import Improver
-from .validity import ValidityChecker
+from classifier import Classifier
+from level_detector import LevelDetector
+from template_manager import TemplateManager
+from summarizer import Summarizer
+from evaluator import Evaluator
+from validity import ValidityChecker
 
 # Intent Layer（意味解析）
 from intent_layer.intent_layer import intent_layer
 
-# 既存の技術推論パイプライン（記事では使わない）
+# Intent Layer の改善モジュール
+from intent_layer.improver import Improver
+
+# 技術推論パイプライン（記事では使わない）
 from improver_pipeline import ImproverPipeline
 
 
@@ -43,16 +45,16 @@ class ArticlePipeline:
         axes = intent["axes"]
         final_vector = intent["final_vector"]
 
-        # --- 2. 分類（Intent の意味軸を補助に使う） ---
+        # --- 2. 分類 ---
         category = self.classifier.classify(article, axes=axes)
 
-        # --- 3. レベル判定（構造軸が強いとレベル判定精度が上がる） ---
+        # --- 3. レベル判定 ---
         level = self.level_detector.detect(article, reasoning_type=reasoning_type)
 
-        # --- 4. テンプレート選択（推論タイプを考慮） ---
+        # --- 4. テンプレート選択 ---
         template = self.template_manager.select(category, level, reasoning_type=reasoning_type)
 
-        # --- 5. 要約（意味軸に応じて要約スタイルを変える） ---
+        # --- 5. 要約 ---
         summary = self.summarizer.summarize(
             article,
             template,
@@ -60,14 +62,14 @@ class ArticlePipeline:
             reasoning_type=reasoning_type
         )
 
-        # --- 6. 評価（Intent Layer の情報を使って改善可能） ---
+        # --- 6. 評価 ---
         evaluation = self.evaluator.evaluate(
             article,
             axes=axes,
             reasoning_type=reasoning_type
         )
 
-        # --- 7. 改善案（意味軸に応じて改善ポイントを変える） ---
+        # --- 7. 改善案 ---
         improvement = self.improver.improve(
             article,
             axes=axes,
@@ -77,7 +79,7 @@ class ArticlePipeline:
         # --- 8. 妥当性チェック ---
         is_valid = self.validity.check(article)
 
-        # --- 9. 統合結果を返す ---
+        # --- 9. 統合結果 ---
         return {
             "intent": intent,
             "category": category,

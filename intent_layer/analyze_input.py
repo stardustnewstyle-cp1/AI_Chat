@@ -1,7 +1,7 @@
 # intent_layer/analyze_input.py
 
-from intent_layer.feature_extractor import extract_features as dict_extract
-from intent_layer.feature_loader import FEATURE_GROUPS
+from intent_layer.feature_extractors import extract_features as dict_extract
+from intent_layer.feature_loaders import FEATURE_GROUPS
 from intent_layer.semantic_axes import classify_axes
 from intent_layer.axis_extractor import extract_axis_weights as simple_axes
 

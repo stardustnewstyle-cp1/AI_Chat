@@ -1,4 +1,4 @@
-# intent_layer/feature_extractor.py
+# intent_layer/feature_extractors.py
 
 import re
 

@@ -3,9 +3,10 @@
 # Intent Layer Pipeline（semantic_axes 統合版）
 # ============================================
 
-from intent_layer.source_filter import SourceFilter
-from intent_layer.feature_extractor import extract_features
-from intent_layer.semantic_axes import load_axes_dict, classify_axes
+from .source_filter import SourceFilter
+from .feature_extractors import extract_features
+from .semantic_axes import load_axes_dict, classify_axes
+
 
 class ImproverPipeline:
 

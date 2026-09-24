@@ -1,4 +1,22 @@
-#intent_classifier.py
+# ============================
+# intent_classifier.py
+# ============================
+
+KEYWORDS = [
+    "compare",
+    "understand",
+    "design",
+    "debug",
+    "improve",
+    "optimize",
+    "summarize",
+    "generate",
+    "classify",
+    "evaluate"
+]
+
+
+
 def extract_features(self, text, source_bias):
     """
     Intent Layer の特徴量抽出。
