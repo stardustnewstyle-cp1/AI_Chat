@@ -1,0 +1,95 @@
+{
+  "Implementation": [
+    "write",
+    "generate",
+    "create",
+    "produce",
+    "make",
+    "build",
+    "python",
+    "function",
+    "class",
+    "snippet",
+    "script",
+    "program"
+  ],
+  "Design": [
+    "architecture",
+    "design",
+    "structure",
+    "organize",
+    "component"
+  ],
+  "Understanding": [
+    "why",
+    "how",
+    "what",
+    "explain",
+    "tell me",
+    "reason",
+    "definition",
+    "meaning",
+    "describe",
+    "what is"
+  ],
+  "Debug": [
+    "error",
+    "traceback",
+    "fix",
+    "bug",
+    "issue",
+    "problem"
+  ],
+  "Comparison": [
+    "difference",
+    "vs",
+    "compare",
+    "contrast",
+    "better",
+    "worse"
+  ],
+  "Optimization": [
+    "optimize",
+    "improve",
+    "faster",
+    "efficient",
+    "refactor"
+  ],
+  "Structuring": [
+    "summary",
+    "summarize",
+    "outline",
+    "key points",
+    "tl;dr",
+    "translate",
+    "convert",
+    "rewrite",
+    "change into"
+  ],
+  "Learning": [
+    "steps",
+    "roadmap",
+    "schedule",
+    "beginner",
+    "study",
+    "learn"
+  ],
+  "Evaluation": [
+    "think",
+    "should",
+    "believe",
+    "consider",
+    "in my opinion",
+    "quality",
+    "review",
+    "check"
+  ],
+  "Decision": [
+    "plan",
+    "next",
+    "choose",
+    "decide",
+    "which",
+    "direction"
+  ]
+}

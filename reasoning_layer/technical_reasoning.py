@@ -17,7 +17,6 @@ class TechnicalReasoner:
     # ============================
     # 内側の層（脳の本体）
     # ============================
-
     def extract_features(self, text: str, source_bias: int = 0) -> Dict[str, Any]:
         keyword_strength = 0
         for kw in ALL_KEYWORDS:
@@ -174,6 +173,9 @@ class TechnicalReasoner:
                 improved["structure_strength"] += 1
             if "設計キーワード不足" in weak_points:
                 improved["keyword_strength"] += 1
+        # source_strength の改善も追加
+        if "source不足" in weak_points:
+            improved["source_strength"] += 1
 
         return improved
 
@@ -184,13 +186,15 @@ class TechnicalReasoner:
         while depth < max_depth:
             features = self.extract_features(raw_text)
             reasoning_type = self.classify_reasoning_type(features)
-            evaluation = self.evaluate(features, reasoning_type)
-            confidence = evaluation["confidence"]
             weak_points = self.detect_weak_points(features, reasoning_type)
+            improved_features = self.improve(features, weak_points, reasoning_type)
+            evaluation = self.evaluate(improved_features, reasoning_type)
+            confidence = evaluation["confidence"]
+            depth += 1
 
             last_result = {
                 "reasoning_type": reasoning_type,
-                "features": features,
+                "features": improved_features,
                 "confidence": confidence,
                 "weak_points": weak_points,
                 "depth": depth,
@@ -198,10 +202,6 @@ class TechnicalReasoner:
 
             if confidence >= threshold or len(weak_points) == 0:
                 break
-
-            improved_features = self.improve(features, weak_points, reasoning_type)
-            # 今は features を再計算せず、改善結果を次ループの材料とみなすならここで差し替えもあり
-            depth += 1
 
         return last_result
 
@@ -247,12 +247,19 @@ class TechnicalReasoner:
         outer["weak_points"] = weak_points
         outer["depth"] = depth
 
-        return outer
+        return {
+            "reasoning_type": reasoning_type,
+            "features": features,
+            "confidence": confidence,
+            "weak_points": weak_points,
+            "depth": depth,
+            "outer": outer
+        }
 
     def _reason_compare(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        raw = context.get("raw_text", "")
-        features = context.get("features", {})
-        comparison_points = self._extract_comparison_points(raw, features)
+        raw = context["raw_text"]
+        features = context["features"]
+        points = self._extract_comparison_points(raw, features)
 
         steps = [
             "比較対象の抽出",
@@ -262,12 +269,33 @@ class TechnicalReasoner:
         ]
 
         analysis = [
-            f"比較軸: {comparison_points}",
+            f"比較軸: {points}",
             "各軸ごとにメリット・デメリットを整理する。",
-            "性能はベンチマーク結果を参照し、コストは導入・運用費用を比較。",
-            "保守性はドキュメントの充実度やコミュニティの活発さを評価。",
-            "拡張性は将来の機能追加やスケーラビリティを考慮。",
         ]
+
+        # -------------------------
+        # ★ 入力依存の追加ロジック
+        # -------------------------
+
+        # raw_text に応じた追加
+        if "速度" in raw or "高速" in raw:
+            analysis.append("速度に関する記述があるため、性能軸を重視する。")
+
+        if "コスト" in raw or "料金" in raw:
+            analysis.append("コストに関する記述があるため、費用面の比較が重要。")
+
+        if "Python" in raw and "Go" in raw:
+            analysis.append("Python と Go の比較が求められている。")
+
+        # features に応じた追加
+        if features["keyword_strength"] >= 3:
+            analysis.append("キーワード密度が高いため、技術的な深い比較が必要。")
+
+        if features["context_strength"] >= 2:
+            analysis.append("文脈が複雑なため、用途に応じた比較が求められる。")
+
+        if features["structure_strength"] >= 2:
+            analysis.append("構造的な観点からの比較も重要になる。")
 
         conclusion = "比較軸に基づいて、用途に応じた最適な選択肢を提示する。"
 
@@ -275,15 +303,52 @@ class TechnicalReasoner:
             "reasoning_type": "compare",
             "steps": steps,
             "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": 0.85,
+            "conclusion": conclusion
         }
 
-    def _extract_comparison_points(self, raw: str, features: Dict[str, Any]):
-        return ["性能", "コスト", "保守性", "拡張性"]
+
+    def _extract_comparison_points(self, raw_text: str, features: Dict[str, Any], weak_points: List[str]):
+        points = []
+
+        # raw_text から比較軸候補を抽出
+        if any(k in raw_text for k in ["速度", "高速", "パフォーマンス", "レスポンス"]):
+            points.append("性能")
+
+        if any(k in raw_text for k in ["コスト", "料金", "値段", "費用"]):
+            points.append("コスト")
+
+        if any(k in raw_text for k in ["保守", "メンテ", "運用", "サポート"]):
+            points.append("保守性")
+
+        if any(k in raw_text for k in ["拡張", "スケール", "スケーラビリティ", "将来性"]):
+            points.append("拡張性")
+
+        # features に応じた追加
+        if features.get("structure_strength", 0) >= 2:
+            points.append("構造性")
+
+        if features.get("keyword_strength", 0) >= 3:
+            points.append("技術的深さ")
+
+        if features.get("context_strength", 0) >= 2:
+            points.append("文脈の複雑性")
+
+        # weak_points に応じた追加
+        if "比較軸不足" in weak_points:
+            points.extend(["性能", "コスト", "保守性", "拡張性"])
+
+        # デフォルト
+        if not points:
+            points = ["性能", "コスト", "保守性", "拡張性"]
+
+        return list(set(points))
+
 
     def _reason_debug(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        raw = context.get("raw_text", "")
+        raw = context["raw_text"]
+        features = context["features"]
+        weak_points = context.get("weak_points", [])
+
         steps = [
             "現象の整理",
             "再現条件の特定",
@@ -297,18 +362,39 @@ class TechnicalReasoner:
             "ログ解析やスタックトレースのパターン認識も活用。",
         ]
 
+        # raw_text に応じた追加
+        if "落ちる" in raw or "クラッシュ" in raw:
+            analysis.append("クラッシュが発生しているため、メモリリークや例外処理の不足が疑われる。")
+
+        if "遅い" in raw or "重い" in raw:
+            analysis.append("動作が重いため、パフォーマンス劣化や無限ループの可能性がある。")
+
+        # features に応じた追加
+        if features["keyword_strength"] >= 3:
+            analysis.append("キーワード密度が高いため、原因候補の特定が容易。")
+
+        if features["structure_strength"] >= 2:
+            analysis.append("構造的な情報が多いため、依存関係の問題を疑うべき。")
+
+        # weak_points に応じた追加
+        if "情報不足" in weak_points:
+            analysis.append("情報が不足しているため、ログの追加取得が必要。")
+
         conclusion = "最も可能性の高い原因候補を提示し、次に確認すべきポイントを示す。"
 
         return {
             "reasoning_type": "debug",
             "steps": steps,
             "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": 0.8,
+            "conclusion": conclusion
         }
 
+
     def _reason_improve(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        raw = context.get("raw_text", "")
+        raw = context["raw_text"]
+        features = context["features"]
+        weak_points = context.get("weak_points", [])
+
         steps = [
             "現状の問題点の抽出",
             "改善余地のある箇所の特定",
@@ -321,42 +407,57 @@ class TechnicalReasoner:
             "コードレビュー結果やテストカバレッジも参考にする。",
         ]
 
+        # -------------------------
+        # ★ raw_text に応じた追加
+        # -------------------------
+        if any(k in raw for k in ["遅い", "重い", "速度", "パフォーマンス"]):
+            analysis.append("速度に関する問題が示唆されているため、パフォーマンス改善が必要。")
+
+        if any(k in raw for k in ["読みにくい", "可読性", "複雑", "スパゲッティ"]):
+            analysis.append("可読性や構造の問題があるため、リファクタリングや責務分割が有効。")
+
+        if any(k in raw for k in ["冗長", "無駄", "最適化"]):
+            analysis.append("冗長な処理が存在する可能性があり、ロジックの簡素化が改善につながる。")
+
+        # -------------------------
+        # ★ features に応じた追加
+        # -------------------------
+        if features.get("structure_strength", 0) >= 2:
+            analysis.append("構造的な情報が多いため、設計改善の余地が大きい。")
+
+        if features.get("keyword_strength", 0) >= 3:
+            analysis.append("改善に関するキーワードが多く、具体的な改善案を提示しやすい。")
+
+        if features.get("context_strength", 0) >= 2:
+            analysis.append("文脈が十分にあるため、改善ポイントの特定が容易。")
+
+        # -------------------------
+        # ★ weak_points に応じた追加
+        # -------------------------
+        if "改善ポイントの構造不足" in weak_points:
+            analysis.append("構造的な情報が不足しているため、改善ポイントの特定が難しい。")
+
+        if "改善キーワード不足" in weak_points:
+            analysis.append("改善に関するキーワードが不足しているため、改善案の精度が低下する可能性がある。")
+
+        if "情報不足" in weak_points:
+            analysis.append("情報が不足しているため、追加の仕様確認やログ取得が必要。")
+
         conclusion = "具体的な改善案を複数提示し、優先度の高いものから実施する方針を示す。"
 
         return {
             "reasoning_type": "improve",
             "steps": steps,
             "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": 0.82,
+            "conclusion": conclusion
         }
 
-    def _reason_optimize(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        raw = context.get("raw_text", "")
-        steps = [
-            "ボトルネックの仮説立て",
-            "計測すべき指標の特定",
-            "最適化候補の列挙",
-            "トレードオフの評価",
-        ]
-
-        analysis = [
-            "パフォーマンス・コスト・リソース使用量の観点から最適化ポイントを検討する。",
-            "プロファイリング結果やリソースモニタリングも活用。",
-        ]
-
-        conclusion = "最も効果が高く、リスクが低い最適化案を優先して提案する。"
-
-        return {
-            "reasoning_type": "optimize",
-            "steps": steps,
-            "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": 0.8,
-        }
 
     def _reason_design(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        raw = context.get("raw_text", "")
+        raw = context["raw_text"]
+        features = context["features"]
+        weak_points = context.get("weak_points", [])
+
         steps = [
             "構成要素の洗い出し",
             "依存関係の整理",
@@ -366,8 +467,44 @@ class TechnicalReasoner:
 
         analysis = [
             "構造性辞書（STRUCTURE_FEATURES）を使って、コンポーネント・関係性・レイアウトを評価する。",
-            "SOLID原則やデザインパターンとの整合性も確認。",
+            "SOLID原則やデザインパターンとの整合性も確認する。",
         ]
+
+        # -------------------------
+        # ★ raw_text に応じた追加
+        # -------------------------
+        if any(k in raw for k in ["複雑", "スパゲッティ", "読みにくい"]):
+            analysis.append("構造が複雑化しているため、責務分割や階層化が必要。")
+
+        if any(k in raw for k in ["依存", "結合", "密結合"]):
+            analysis.append("依存関係が強すぎる可能性があり、疎結合化が設計改善につながる。")
+
+        if any(k in raw for k in ["拡張", "変更", "将来性"]):
+            analysis.append("将来の変更を考慮した拡張性のある設計が求められる。")
+
+        # -------------------------
+        # ★ features に応じた追加
+        # -------------------------
+        if features.get("structure_strength", 0) >= 2:
+            analysis.append("構造的な情報が多いため、設計改善の余地が大きい。")
+
+        if features.get("keyword_strength", 0) >= 3:
+            analysis.append("設計に関するキーワードが多く、具体的な改善案を提示しやすい。")
+
+        if features.get("context_strength", 0) >= 2:
+            analysis.append("文脈が十分にあるため、設計の問題点を正確に把握できる。")
+
+        # -------------------------
+        # ★ weak_points に応じた追加
+        # -------------------------
+        if "構造情報不足" in weak_points:
+            analysis.append("構造的な情報が不足しているため、コンポーネントの関係性を再確認する必要がある。")
+
+        if "責務不明確" in weak_points:
+            analysis.append("責務分割が不明確であるため、各コンポーネントの役割を明確化する必要がある。")
+
+        if "依存関係不明確" in weak_points:
+            analysis.append("依存関係が不明確なため、モジュール間の結合度を再評価する必要がある。")
 
         conclusion = "設計の良し悪しを評価し、改善すべき構造とその理由を提示する。"
 
@@ -375,6 +512,11 @@ class TechnicalReasoner:
             "reasoning_type": "design",
             "steps": steps,
             "analysis": analysis,
-            "conclusion": conclusion,
-            "confidence": 0.85,
+            "conclusion": conclusion
         }
+
+    def _reason_optimize(self, context: Dict[str, Any]) -> Dict[str, Any]:
+
+
+        structure_strength = self.extract_features(context["strength"], source_bias=0)
+        complexity_score = self

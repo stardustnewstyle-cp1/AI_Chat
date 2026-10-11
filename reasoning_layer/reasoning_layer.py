@@ -3,7 +3,23 @@
 # ============================================
 
 class ReasoningLayer:
+    def run(self, text, api_info, reasoning_type, features):
+        #""""""
+        #text:ユーザ入力
+        #api_info:API情報(コードが必要な場合)
+        #source_bias:入力元の信頼性(Intent_Layerのスコア)
+        #""""""
+        #reasoning_type → intent_type
+        intent_type = self.select_code_intent(reasoning_type)
+        #intent_type に応じてコード生成
+        code = self.generate_code(api_info, intent_type)
 
+        return{
+            "intent_type": intent_type,
+            "code": code,
+            "features": features
+        }
+        
     # Intent Layer → Code Generator のマッピング
     INTENT_MAP = {
         "structural": "design",
@@ -15,6 +31,11 @@ class ReasoningLayer:
         "improvement": "improve",
         "causal": "debug",
         "selective": "optimize",
+        "compare": "compare",
+        "debug": "debug",
+        "improve": "improve",
+        "optimize": "optimize",
+        "design": "design"
     }
 
     def select_code_intent(self, reasoning_type):
@@ -25,19 +46,7 @@ class ReasoningLayer:
         return self.INTENT_MAP.get(reasoning_type, "design")
 
     # =========================================================
-    # Intent Layer の出力（intent_result）からコード生成する統合関数
-    # =========================================================
-    def generate_from_intent(self, api_info, intent_result):
-        """
-        intent_result = intent_layer(user_input) の返り値
-        ここから intent_type を決めて generate_code を呼ぶ
-        """
-        reasoning_type = intent_result["reasoning_type"]
-        intent_type = self.select_code_intent(reasoning_type)
-        return self.generate_code(api_info, intent_type)
-
-    # =========================================================
-    # 既存のコード生成ロジック（君のコードをそのまま統合）
+    # 既存のコード生成ロジック
     # =========================================================
 
     def generate_code(self, api_info, intent_type):
