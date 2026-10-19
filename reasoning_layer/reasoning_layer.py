@@ -1,69 +1,97 @@
-# ============================================
-# Reasoning_Layer.py（Intent Layer → Code Generator 統合版）
-# ============================================
-
+# reasoning_layer.py
 class ReasoningLayer:
-    def run(self, text, api_info, reasoning_type, features):
-        #""""""
-        #text:ユーザ入力
-        #api_info:API情報(コードが必要な場合)
-        #source_bias:入力元の信頼性(Intent_Layerのスコア)
-        #""""""
-        #reasoning_type → intent_type
+
+    def __init__(self):
+        # IntentDetector の domain を reasoning_type に変換するマップ
+        self.DOMAIN_TO_REASONING = {
+            "compare": "comparative",
+            "design": "structural",
+            "steps": "procedural",
+            "caution": "causal",
+            "improvement": "improvement",
+            "summary": "conceptual",
+            "example": "example",
+            "specification": "factual",
+            "systematize": "organizational",
+            "explain": "conceptual"
+        }
+
+        # reasoning_type → Code Generator intent_type
+        self.INTENT_MAP = {
+            "structural": "design",
+            "procedural": "design",
+            "conceptual": "design",
+            "organizational": "design",
+            "comparative": "compare",
+            "improvement": "improve",
+            "causal": "debug",
+            "selective": "optimize",
+            "example": "design",
+            "factual": "design",
+            "compare": "compare",
+            "debug": "debug",
+            "improve": "improve",
+            "optimize": "optimize",
+            "design": "design"
+        }
+
+    # ============================================================
+    # Pipeline から呼ぶ統合インターフェース
+    # ============================================================
+    def run(self, intent_info, api_info, features):
+        """
+        intent_info = IntentDetector.run() の返り値
+        {
+            "domain": ...,
+            "intent": ...,
+            "axes": ...,
+            "score": ...
+        }
+        """
+
+        domain = intent_info["domain"]
+        reasoning_type = self.map_domain_to_reasoning(domain)
         intent_type = self.select_code_intent(reasoning_type)
-        #intent_type に応じてコード生成
+
         code = self.generate_code(api_info, intent_type)
 
-        return{
+        return {
+            "domain": domain,
+            "reasoning_type": reasoning_type,
             "intent_type": intent_type,
             "code": code,
             "features": features
         }
-        
-    # Intent Layer → Code Generator のマッピング
-    INTENT_MAP = {
-        "structural": "design",
-        "procedural": "design",
-        "conceptual": "design",
-        "organizational": "design",
 
-        "comparative": "compare",
-        "improvement": "improve",
-        "causal": "debug",
-        "selective": "optimize",
-        "compare": "compare",
-        "debug": "debug",
-        "improve": "improve",
-        "optimize": "optimize",
-        "design": "design"
-    }
+    # ============================================================
+    # domain → reasoning_type
+    # ============================================================
+    def map_domain_to_reasoning(self, domain):
+        return self.DOMAIN_TO_REASONING.get(domain, "conceptual")
 
+    # ============================================================
+    # reasoning_type → Code Generator intent_type
+    # ============================================================
     def select_code_intent(self, reasoning_type):
-        """
-        Intent Layer の reasoning_type を
-        Code Generator の intent_type に変換する。
-        """
         return self.INTENT_MAP.get(reasoning_type, "design")
 
-    # =========================================================
-    # 既存のコード生成ロジック
-    # =========================================================
-
+    # ============================================================
+    # Code Generator（既存ロジック）
+    # ============================================================
     def generate_code(self, api_info, intent_type):
+
         if intent_type == "design":
             return self.generate_design_code(api_info)
-
         if intent_type == "debug":
             return self.generate_debug_code(api_info)
-
         if intent_type == "improve":
             return self.generate_improve_code(api_info)
-
         if intent_type == "compare":
             return self.generate_compare_code(api_info)
-
         if intent_type == "optimize":
             return self.generate_optimize_code(api_info)
+
+        return "# intent_type が不明です"
 
     # -------------------------
     # design: 基本コード生成
@@ -85,7 +113,6 @@ class ReasoningLayer:
             code.append(f"# 注意: {n}")
 
         code.append(f"{name}({', '.join(params)})")
-
         return "\n".join(code)
 
     # -------------------------
@@ -117,6 +144,7 @@ class ReasoningLayer:
 
         code = []
         code.append("# 改善版コード")
+
         for p in perf[:2]:
             code.append(f"# 性能改善ポイント: {p}")
 
@@ -133,6 +161,7 @@ class ReasoningLayer:
 
         code = []
         code.append("# API比較コード")
+
         for u in usage[:2]:
             code.append(f"# 使用例: {u}")
 
@@ -149,6 +178,7 @@ class ReasoningLayer:
 
         code = []
         code.append("# 性能最適化コード")
+
         for p in perf[:2]:
             code.append(f"# 性能注意点: {p}")
 

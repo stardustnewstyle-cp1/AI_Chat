@@ -1,0 +1,22 @@
+{
+  "explain": ["summary", "features", "example", "caution"],
+  "design": ["purpose", "requirements", "architecture", "flow", "caution"],
+  "compare": ["comparison_table", "differences", "use_cases", "caution"],
+  "steps": ["steps", "notes", "caution"],
+  "caution": ["cautions", "anti_patterns"],
+  "code_improve": ["before", "after", "reason", "caution"],
+  "summary": ["points", "background", "conclusion"],
+  "decompose": ["overview", "elements", "relations", "caution"],
+  "structure": ["overview", "sections", "relations", "caution"],
+  "abstract": ["core_concept", "general_rules", "examples"],
+  "concrete": ["specific_cases", "examples", "steps"],
+  "example": ["example", "explanation", "variation"],
+  "anti_pattern": ["anti_patterns", "reason", "fix"],
+  "best_practice": ["principles", "recommendations", "prohibitions", "caution"],
+  "checklist": ["check_items", "notes"],
+  "evaluation": ["criteria", "score", "reason"],
+  "improvement": ["issues", "solutions", "steps"],
+  "specification": ["requirements", "constraints", "rules"],
+  "rule": ["rules", "examples", "exceptions"],
+  "systematize": ["overview", "categories", "relations", "caution"]
+}

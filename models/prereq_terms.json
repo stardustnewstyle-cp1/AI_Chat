@@ -1,0 +1,33 @@
+{
+    "linux": ["os"],
+    "ubuntu": ["os"],
+    "kernel": ["os"],
+
+    "tcp": ["network"],
+    "udp": ["network"],
+    "dns": ["network"],
+
+    "mysql": ["database"],
+    "postgres": ["database"],
+    "mongodb": ["database"],
+
+    "jwt": ["security"],
+    "oauth": ["security"],
+    "tls": ["security"],
+
+    "python": ["language"],
+    "java": ["language"],
+    "rust": ["language"],
+
+    "matrix": ["math"],
+    "vector": ["math"],
+    "derivative": ["math"],
+
+    "regression": ["ml"],
+    "transformer": ["ml"],
+    "embedding": ["ml"],
+
+    "aws": ["cloud"],
+    "azure": ["cloud"],
+    "gcp": ["cloud"]
+}

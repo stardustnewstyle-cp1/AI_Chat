@@ -1,0 +1,21 @@
+{
+    "python": ["Programming Languages"],
+    "java": ["Programming Languages"],
+    "rust": ["Programming Languages"],
+    "sql": ["Databases"],
+    "postgres": ["Databases"],
+    "mongodb": ["Databases"],
+    "neural network": ["AI/ML"],
+    "transformer": ["AI/ML"],
+    "embedding": ["AI/ML"],
+    "docker": ["DevOps"],
+    "kubernetes": ["DevOps"],
+    "aws": ["Cloud"],
+    "azure": ["Cloud"],
+    "gcp": ["Cloud"],
+    "http": ["Networking"],
+    "tcp": ["Networking"],
+    "rest": ["Networking"],
+    "jwt": ["Security"],
+    "oauth": ["Security"]
+}
