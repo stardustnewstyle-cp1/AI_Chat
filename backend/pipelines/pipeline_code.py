@@ -6,7 +6,6 @@
 from intent_layer.intent_detector import IntentDetector
 from reasoning_layer.reasoning_layer import ReasoningLayer
 from teacher_layer.teacher_layer import TeacherLayer
-from code_generator.code_generator import CodeGenerator
 
 
 class CodePipeline:
