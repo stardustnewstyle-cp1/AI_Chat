@@ -15,11 +15,11 @@ class CodePipeline:
         """
         self.llm = llm
 
-        # 新構造の各層
+        
         self.intent_detector = IntentDetector()
         self.reasoning_layer = ReasoningLayer()
         self.teacher_layer = TeacherLayer()
-        self.code_generator = CodeGenerator()
+        
 
     def run(self, text: str, api_info: dict):
         """

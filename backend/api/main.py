@@ -1,4 +1,5 @@
-from frontend.fastapi import FastAPI
+#main.py#
+from fastapi import FastAPI
 from pydantic import BaseModel
 from pipelines.pipeline import Pipeline
 from llm.llm import LLM

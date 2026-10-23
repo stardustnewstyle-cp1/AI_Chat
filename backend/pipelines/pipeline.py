@@ -6,7 +6,7 @@
 from intent_layer.intent_detector import IntentDetector
 from reasoning_layer.reasoning_layer import ReasoningLayer
 from teacher_layer.teacher_layer import TeacherLayer
-from ml.feature_extraction import FeatureExtractor
+from ml.feature_extractor import FeatureExtractor
 from ml.level_detector import LevelDetector
 
 class Pipeline:

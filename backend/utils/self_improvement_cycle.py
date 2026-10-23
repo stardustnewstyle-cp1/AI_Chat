@@ -1,7 +1,7 @@
 # utils/self_improvement_cycle.py
 
 from teacher_layer.teacher_layer import TeacherLayer
-from pipelines.article_pipeline import Pipeline
+from pipelines.pipeline import Pipeline
 
 
 def self_improvement_cycle(intent_result, raw_output):
