@@ -1,16 +1,17 @@
-# ml/level_detector_ml.py
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import joblib
 
+
 class LevelDetectorML:
     def __init__(self):
         self.model = None
 
     def train(self):
-        df = pd.read_excel("data/processed/training_data.xlsx")
+        df = pd.read_excel("C:/Users/Owner/source/AIchat/pipeline/backend/data/processed/training_data.xlsx")
+
         x = df.drop("final_level", axis=1)
         y = df["final_level"]
 
@@ -33,3 +34,8 @@ class LevelDetectorML:
     def predict(self, features: dict):
         df = pd.DataFrame([features])
         return self.model.predict(df)[0]
+
+
+if __name__ == "__main__":
+    detector = LevelDetectorML()
+    detector.train()

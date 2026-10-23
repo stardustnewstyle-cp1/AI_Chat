@@ -1,10 +1,14 @@
 # ml/level_detector.py
+
 class LevelDetector:
     """
-    特徴量生成の本体（ルールベース）
-    ML導入後は判定ではなく特徴量生成専用になる
+    特徴量生成（calc_xxx）＋ルールベースのレベル判定（detect）
+    ML版は level_detector_ml.py に分離してあるのでここは軽量版でOK
     """
 
+    # -------------------------
+    # 特徴量生成（既存）
+    # -------------------------
     def calc_depth(self, text: str) -> float:
         return len(text.split()) / 100
 
@@ -29,3 +33,25 @@ class LevelDetector:
 
     def calc_cost(self, text: str) -> float:
         return self.calc_depth(text) * 0.3
+
+    # -------------------------
+    # ★追加：レベル判定（Pipeline が使う）
+    # -------------------------
+    def detect(self, features: dict) -> str:
+        """
+        ルールベースの簡易レベル判定
+        ML版は level_detector_ml.py の predict() を使う
+        """
+
+        score = (
+            features.get("tech_terms", 0) +
+            features.get("connectives", 0) +
+            features.get("causal_links", 0)
+        )
+
+        if score < 3:
+            return "初級"
+        elif score < 7:
+            return "中級"
+        else:
+            return "上級"
