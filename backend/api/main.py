@@ -1,3 +1,4 @@
+#main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 
 pipeline = Pipeline(llm=LLM())
+
 
 class Query(BaseModel):
     text: str
@@ -42,7 +44,9 @@ def ask(query: Query):
     text = query.text
 
     if should_use_code_mode(text):
-        result = pipeline.run(text)
+        result = pipeline.run(text) or {}
+        if not isinstance(result, dict):
+            result = {}
 
         code_text = result.get("code")
         if not code_text:
@@ -56,10 +60,16 @@ def ask(query: Query):
             ]
         }
 
-    raw = pipeline.run(text)
+    raw = pipeline.run(text) or {}
+    if not isinstance(raw, dict):
+        raw = {}
+
+    sections = raw.get("sections", [])
+    if not isinstance(sections, list):
+        sections = []
 
     return {
         "mode": "answer",
         "title": "回答",
-        "sections": raw["sections"]
+        "sections": sections
     }
