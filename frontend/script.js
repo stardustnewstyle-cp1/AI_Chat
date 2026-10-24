@@ -4,31 +4,24 @@ function autoResize() {
     input.style.height = input.scrollHeight + "px";
 }
 
-document.getElementById("userInput").addEventListener("input", autoResize);
-
-document.getElementById("userInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-    }
-});
-
 function appendMessage(role, text) {
     const result = document.getElementById("result");
-    const msg = document.createElement("div");
-    msg.className = `message ${role}`;
+    const message = document.createElement("div");
+    message.className = `message ${role}`;
 
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     bubble.textContent = text;
 
-    msg.appendChild(bubble);
-    result.appendChild(msg);
+    message.appendChild(bubble);
+    result.appendChild(message);
     result.scrollTop = result.scrollHeight;
 }
 
 function flattenSections(data) {
-    if (!data || !Array.isArray(data.sections)) return "回答を取得できませんでした。";
+    if (!data || !data.sections || !Array.isArray(data.sections)) {
+        return "回答を取得できませんでした。";
+    }
 
     const parts = [];
     data.sections.forEach(sec => {
@@ -42,13 +35,23 @@ function flattenSections(data) {
     return parts.join("\n\n");
 }
 
+document.getElementById("userInput").addEventListener("input", autoResize);
+
+document.getElementById("userInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+    }
+});
+
 async function send() {
-    const text = document.getElementById("userInput").value.trim();
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
     if (!text) return;
 
     appendMessage("user", text);
 
-    document.getElementById("userInput").value = "";
+    input.value = "";
     autoResize();
 
     try {
@@ -58,7 +61,9 @@ async function send() {
             body: JSON.stringify({ text })
         });
 
-        if (!response.ok) throw new Error("API error");
+        if (!response.ok) {
+            throw new Error("API error");
+        }
 
         const data = await response.json();
         const answer = flattenSections(data);

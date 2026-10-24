@@ -4,19 +4,40 @@
     <meta charset="UTF-8">
     <title>Tech AI Assistant</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 </head>
 <body>
 
 <div class="app">
     <header class="topbar">
-        <div class="topbar-title">localhost:8080</div>
+        <div class="topbar-left">
+            <span class="dot"></span>
+            <span>localhost:8080</span>
+        </div>
         <div class="topbar-icons">
             <span>☆</span>
+            <span>⎈</span>
             <span>⋯</span>
         </div>
     </header>
 
-    <main class="chat-area" id="result"></main>
+    <main class="main">
+        <div id="tutorial" class="tutorial-wrap">
+            <div class="tutorial-card">
+                <h2>このAIは技術専用です</h2>
+                <p>技術に関係ない質問には回答できません。</p>
+            </div>
+
+            <div class="tutorial-card">
+                <h2>このAIは技術専用です</h2>
+                <p>技術に関係ない質問には回答できません。</p>
+            </div>
+        </div>
+
+        <div id="result" class="chat-area"></div>
+    </main>
 
     <div class="input-bar">
         <textarea id="userInput" rows="1" placeholder="質問を入力..."></textarea>
