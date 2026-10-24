@@ -1,3 +1,11 @@
+from backend.intent_layer.intent_detector import IntentDetector
+from backend.reasoning_layer.reasoning_layer import ReasoningLayer
+from backend.teacher_layer.teacher_layer import TeacherLayer
+from backend.ml.feature_extractor import FeatureExtractor
+from backend.ml.level_detector import LevelDetector
+from backend.llm.llm import LLM
+
+
 class Pipeline:
     def __init__(self, llm: LLM):
         self.llm = llm
@@ -219,7 +227,6 @@ class Pipeline:
         # ここが重要:
         # 追加の外部補助情報が必要なら、ユーザーには見せずに使う
         if use_internal_search:
-            # 補助情報としてのメモを作る
             internal_context = (
                 "公式ドキュメントと公開情報を補助として確認し、"
                 "最新仕様と一般的な実装方法に沿って回答する。"

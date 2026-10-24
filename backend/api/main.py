@@ -23,11 +23,14 @@ class Query(BaseModel):
 
 
 def is_local_question(text: str) -> bool:
-    keywords = [
+    lower = text.lower()
+    local_keywords = [
         "this code",
         "this file",
         "this repository",
+        "this module",
         "this api",
+        "this function",
         "error",
         "design",
         "implementation",
@@ -50,8 +53,7 @@ def is_local_question(text: str) -> bool:
         "go",
         "rust",
     ]
-    lowered = text.lower()
-    return any(keyword in lowered for keyword in keywords)
+    return any(keyword in lower for keyword in local_keywords)
 
 
 @app.post("/ask")
@@ -73,26 +75,16 @@ def ask(query: Query):
             "sections": sections
         }
 
-    # ユーザーには見せない内部検索
-    search_context = {
-        "source": "official-docs",
-        "summary": "外部の公式ドキュメントを参照した情報を補助として利用します。",
-        "snippets": [
-            "公式ドキュメントを確認して、最新仕様に沿って回答します。",
-            "プロジェクト外の一般知識は、明示的に補助情報として扱います。"
-        ]
-    }
-
+    # 外部検索はユーザーに見せない
+    # ここでは内部補助情報を与えて、質問をより確実に処理する
     enriched = pipeline.run(
         f"""
         ユーザーの質問:
         {text}
 
-        追加情報:
-        {search_context['summary']}
-        {search_context['snippets']}
-
-        上記を踏まえて、回答してください。
+        補助情報:
+        公式ドキュメントと公開情報を補助として確認し、
+        最新仕様や一般的な実装方法に沿って回答する。
         """
     ) or {}
 
