@@ -17,8 +17,8 @@ class Pipeline:
 
     def _is_technical_question(self, text: str) -> bool:
         """
-        技術質問かどうかを簡易的に判定する。
-        これが true なら non_technical 判定を通さない。
+        技術質問かどうかを簡易判定する。
+        日本語・英語の技術キーワードが含まれていれば true。
         """
         lower = text.lower()
         technical_keywords = [
@@ -31,7 +31,7 @@ class Pipeline:
             "class",
             "クラス",
             "api",
-            "api docs",
+            "API",
             "design",
             "設計",
             "implementation",
@@ -64,15 +64,36 @@ class Pipeline:
             "this repository",
             "this function",
             "this api",
+            "非同期",
+            "同期",
+            "処理",
+            "設計",
+            "実行",
+            "ログ",
+            "cache",
+            "redis",
+            "mysql",
+            "postgres",
+            "flask",
+            "fastapi",
+            "django",
+            "react",
+            "vue",
+            "node",
+            "next",
+            "typescript",
+            "http",
+            "https",
         ]
         return any(keyword in lower for keyword in technical_keywords)
 
     def _should_use_internal_search(self, text: str) -> bool:
         """
         外部公式情報が必要かどうかを判定する。
-        ここで true になった場合、ユーザーには見えない内部検索を使う。
+        技術質問であれば、通常は内部ローカル判定で済む。
         """
         lower = text.lower()
+
         external_keywords = [
             "latest",
             "latest version",
@@ -94,27 +115,8 @@ class Pipeline:
         if any(k in lower for k in external_keywords):
             return True
 
-        # 典型的なローカル質問なら false
-        local_keywords = [
-            "this code",
-            "this file",
-            "this repository",
-            "this api",
-            "this module",
-            "error",
-            "design",
-            "implementation",
-            "this function",
-            "class",
-            "import",
-            "bug",
-            "fix",
-            "refactor",
-            "architecture",
-            "backend",
-            "frontend",
-        ]
-        if any(k in lower for k in local_keywords):
+        # 一般的な技術質問なら、外部検索を使わない
+        if self._is_technical_question(text):
             return False
 
         return True
@@ -129,11 +131,6 @@ class Pipeline:
         axes: dict,
         score: float,
     ) -> dict:
-        """
-        TeacherLayer が期待するキーをここで生成する。
-        これがないと、TeacherLayer は空文字・空配列しか作れない。
-        既存のインターフェースを壊さず、Pipeline だけで本文データを補う。
-        """
         text_clean = text.strip()
 
         if domain == "design":
@@ -251,14 +248,14 @@ class Pipeline:
             }
 
         # ここが重要:
-        # 技術キーワードがあるなら、まず技術質問として扱う
+        # 技術質問なら、先に技術として扱う
         if self._is_technical_question(text):
             intent_result = self.intent_detector.detect(text)
             domain = intent_result["domain"]
         else:
             intent_result = {"domain": "non_technical", "intent": "general", "axes": {}, "score": 0.0}
 
-        # 2. 非技術質問
+        # 非技術質問はここで弾く
         if intent_result.get("domain") == "non_technical":
             return {
                 "title": "非技術質問",
@@ -270,10 +267,8 @@ class Pipeline:
                 ]
             }
 
-        # 3. 内部検索を使うべきかどうかを判定
         use_internal_search = self._should_use_internal_search(text)
 
-        # 4. 既存のロジックをそのまま使う
         intent = intent_result.get("intent")
         axes = intent_result.get("axes")
         score = intent_result.get("score")
@@ -292,8 +287,6 @@ class Pipeline:
             score=score,
         )
 
-        # ここが重要:
-        # 追加の外部補助情報が必要なら、ユーザーには見せずに使う
         if use_internal_search:
             internal_context = (
                 "公式ドキュメントと公開情報を補助として確認し、"
