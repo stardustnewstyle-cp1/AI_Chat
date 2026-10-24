@@ -9,7 +9,7 @@ body {
     padding: 20px;
     max-width: 900px;
     margin: auto;
-    padding-bottom: 180px; /* 下固定入力欄のスペース */
+    padding-bottom: 180px;
 }
 
 /* チュートリアル */
@@ -44,6 +44,24 @@ body {
 
 .nontech {
     border-left-color: #e24a4a;
+}
+
+.code-card {
+    border-left-color: #10b981;
+}
+
+.code-card pre {
+    background: #111827;
+    color: #f9fafb;
+    padding: 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.code-card code {
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 /* 入力欄（画面下固定） */

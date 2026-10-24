@@ -28,37 +28,73 @@ async function send() {
     const text = document.getElementById("userInput").value.trim();
     if (!text) return;
 
-    // チュートリアルをフェードアウト
     const tutorial = document.getElementById("tutorial");
-    if (tutorial.style.display !== "none") {
+    if (tutorial && tutorial.style.display !== "none") {
         tutorial.classList.add("fade-out");
         setTimeout(() => tutorial.style.display = "none", 400);
     }
 
-    // ローディングカード
     const result = document.getElementById("result");
     const loading = document.createElement("div");
     loading.className = "card";
     loading.innerHTML = "<p>考え中...</p>";
     result.appendChild(loading);
 
-    const response = await fetch("http://localhost:8000/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text })
-    });
+    try {
+        const response = await fetch("http://localhost:8000/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
 
-    const data = await response.json();
-    result.removeChild(loading);
+        if (!response.ok) {
+            throw new Error("API error");
+        }
 
-    render(data);
+        const data = await response.json();
+        result.removeChild(loading);
+
+        const input = document.getElementById("userInput");
+        input.value = "";
+        input.style.height = "auto";
+        input.focus();
+
+        render(data);
+    } catch (error) {
+        result.removeChild(loading);
+
+        const errCard = document.createElement("div");
+        errCard.className = "card";
+        errCard.innerHTML = "<p>通信エラーが発生しました。</p>";
+        result.appendChild(errCard);
+    }
 }
 
 // レンダリング
 function render(data) {
     const result = document.getElementById("result");
 
-    // 非技術質問
+    // コード生成モード
+    if (data.mode === "code") {
+        const card = document.createElement("div");
+        card.className = "card code-card";
+
+        const title = data.title || "コード例";
+        const codeText = (data.sections && data.sections[0] && data.sections[0].code)
+            ? data.sections[0].code
+            : "コードを生成できませんでした。";
+
+        card.innerHTML = `
+            <h3>${title}</h3>
+            <pre><code>${codeText}</code></pre>
+        `;
+
+        result.appendChild(card);
+        hljs.highlightAll();
+        return;
+    }
+
+    // 旧仕様の非技術質問
     if (data.title === "非技術質問") {
         const card = document.createElement("div");
         card.className = "card nontech";
@@ -70,12 +106,22 @@ function render(data) {
         return;
     }
 
-    // セクションごとにカード化
+    // 通常の answer モード
+    if (!data.sections || !Array.isArray(data.sections)) {
+        const err = document.createElement("div");
+        err.className = "card";
+        err.innerHTML = "<p>応答データが不正です。</p>";
+        result.appendChild(err);
+        return;
+    }
+
     data.sections.forEach(sec => {
         const card = document.createElement("div");
         card.className = "card";
 
-        card.innerHTML += `<h3>${sec.header}</h3>`;
+        if (sec.header) {
+            card.innerHTML += `<h3>${sec.header}</h3>`;
+        }
 
         if (sec.content) {
             card.innerHTML += `<p>${sec.content}</p>`;
