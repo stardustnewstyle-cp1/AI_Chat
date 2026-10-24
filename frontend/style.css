@@ -103,13 +103,11 @@ button:hover {
     background: #2f6cd1;
 }
 
-/* フェードアウト */
 .fade-out {
     opacity: 0;
     transition: opacity 0.4s ease;
 }
 
-/* アニメーション */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -122,7 +120,6 @@ pre {
     overflow-x: auto;
 }
 
-/* スマホ対応 */
 @media (max-width: 600px) {
     .main {
         padding: 10px;

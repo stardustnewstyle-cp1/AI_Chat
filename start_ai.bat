@@ -1,10 +1,12 @@
 @echo off
 cd /d %~dp0
 
-call venv\Scripts\activate
+call venv\Scripts\activate.bat
+
+REM ブラウザを開く
+start "" http://localhost:8080
 
 REM フロントを起動
-start "" http://localhost:8080
 cd frontend
 start "" python -m http.server 8080
 

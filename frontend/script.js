@@ -74,7 +74,6 @@ async function send() {
 function render(data) {
     const result = document.getElementById("result");
 
-    // コード生成モード
     if (data.mode === "code") {
         const card = document.createElement("div");
         card.className = "card code-card";
@@ -84,29 +83,23 @@ function render(data) {
             ? data.sections[0].code
             : "コードを生成できませんでした。";
 
-        card.innerHTML = `
-            <h3>${title}</h3>
-            <pre><code>${codeText}</code></pre>
-        `;
+        const h3 = document.createElement("h3");
+        h3.textContent = title;
+        card.appendChild(h3);
 
+        const pre = document.createElement("pre");
+        const code = document.createElement("code");
+        code.textContent = codeText;
+        pre.appendChild(code);
+
+        card.appendChild(pre);
         result.appendChild(card);
+
         hljs.highlightAll();
         return;
     }
 
-    // 旧仕様の非技術質問
-    if (data.title === "非技術質問") {
-        const card = document.createElement("div");
-        card.className = "card nontech";
-        card.innerHTML = `
-            <h3>${data.title}</h3>
-            <p>${data.sections[0].content}</p>
-        `;
-        result.appendChild(card);
-        return;
-    }
-
-    // 通常の answer モード
+    // 通常 answer モード
     if (!data.sections || !Array.isArray(data.sections)) {
         const err = document.createElement("div");
         err.className = "card";
@@ -120,31 +113,43 @@ function render(data) {
         card.className = "card";
 
         if (sec.header) {
-            card.innerHTML += `<h3>${sec.header}</h3>`;
+            const h3 = document.createElement("h3");
+            h3.textContent = sec.header;
+            card.appendChild(h3);
         }
 
         if (sec.content) {
-            card.innerHTML += `<p>${sec.content}</p>`;
+            const p = document.createElement("p");
+            p.textContent = sec.content;
+            card.appendChild(p);
         }
 
         if (sec.list) {
-            card.innerHTML += "<ul>";
+            const ul = document.createElement("ul");
             sec.list.forEach(item => {
-                card.innerHTML += `<li>${item}</li>`;
+                const li = document.createElement("li");
+                li.textContent = item;
+                ul.appendChild(li);
             });
-            card.innerHTML += "</ul>";
+            card.appendChild(ul);
         }
 
         if (sec.steps) {
-            card.innerHTML += "<ol>";
+            const ol = document.createElement("ol");
             sec.steps.forEach(step => {
-                card.innerHTML += `<li>${step}</li>`;
+                const li = document.createElement("li");
+                li.textContent = step;
+                ol.appendChild(li);
             });
-            card.innerHTML += "</ol>";
+            card.appendChild(ol);
         }
 
         if (sec.code) {
-            card.innerHTML += `<pre><code>${sec.code}</code></pre>`;
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.textContent = sec.code;
+            pre.appendChild(code);
+            card.appendChild(pre);
         }
 
         result.appendChild(card);
