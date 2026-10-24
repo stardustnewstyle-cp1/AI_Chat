@@ -1,3 +1,5 @@
+let isSending = false;
+
 function fill(text) {
     const input = document.getElementById("userInput");
     input.value = text;
@@ -27,7 +29,6 @@ function appendMessage(role, text) {
 
 function appendFollowUp(text, actions) {
     const result = document.getElementById("result");
-
     const message = document.createElement("div");
     message.className = "message assistant";
 
@@ -79,7 +80,7 @@ function defaultFollowUps() {
         {
             label: "修正案を出す",
             onClick: () => {
-                appendMessage("assistant", "この部分は、責務を分離し、例外ハンドリングとログ出力を追加するのが安全です。");
+                appendMessage("assistant", "この部分は、責務を分離して、例外ハンドリングとログ出力を追加した方が安全です。");
             }
         },
         {
@@ -112,10 +113,21 @@ document.getElementById("userInput").addEventListener("keydown", (e) => {
     }
 });
 
+document.getElementById("sendButton").addEventListener("click", () => {
+    send();
+});
+
 async function send() {
+    if (isSending) return;
+
     const input = document.getElementById("userInput");
+    const button = document.getElementById("sendButton");
     const text = input.value.trim();
+
     if (!text) return;
+
+    isSending = true;
+    button.disabled = true;
 
     appendMessage("user", text);
 
@@ -129,7 +141,9 @@ async function send() {
             body: JSON.stringify({ text })
         });
 
-        if (!response.ok) throw new Error("API error");
+        if (!response.ok) {
+            throw new Error("API error");
+        }
 
         const data = await response.json();
 
@@ -183,5 +197,8 @@ async function send() {
                 }
             ]
         );
+    } finally {
+        isSending = false;
+        button.disabled = false;
     }
 }
