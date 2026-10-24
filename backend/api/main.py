@@ -1,8 +1,8 @@
 #main.py#
 from fastapi import FastAPI
 from pydantic import BaseModel
-from pipelines.pipeline import Pipeline
-from llm.llm import LLM
+from backend.pipelines.pipeline import Pipeline
+from backend.llm.llm import LLM
 
 app = FastAPI()
 pipeline = Pipeline(llm=LLM())

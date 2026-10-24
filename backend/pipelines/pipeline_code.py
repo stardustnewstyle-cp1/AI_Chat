@@ -3,9 +3,9 @@
 # 技術コード生成：IntentDetector → ReasoningLayer → TeacherLayer → CodeGenerator → LLM
 # ============================================================
 
-from intent_layer.intent_detector import IntentDetector
-from reasoning_layer.reasoning_layer import ReasoningLayer
-from teacher_layer.teacher_layer import TeacherLayer
+from backend.intent_layer.intent_detector import IntentDetector
+from backend.reasoning_layer.reasoning_layer import ReasoningLayer
+from backend.teacher_layer.teacher_layer import TeacherLayer
 
 
 class CodePipeline:

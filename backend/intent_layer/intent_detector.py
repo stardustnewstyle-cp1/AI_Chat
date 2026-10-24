@@ -6,7 +6,7 @@ import re
 
 class IntentDetector:
     def __init__(self):
-        path = os.path.join(os.path.dirname(__file__), "..", "models", "technical_terms.json")
+        path = os.path.join(os.path.dirname(__file__), "..", "models/categories/", "technical_terms.json")
         with open(path, "r", encoding="utf-8") as f:
             self.tech_terms = set(json.load(f))
 

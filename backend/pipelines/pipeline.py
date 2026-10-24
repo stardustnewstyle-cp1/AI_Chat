@@ -1,11 +1,11 @@
 # pipelines/pipeline.py
 
-from intent_layer.intent_detector import IntentDetector
-from reasoning_layer.reasoning_layer import ReasoningLayer
-from teacher_layer.teacher_layer import TeacherLayer
-from ml.feature_extractor import FeatureExtractor
-from ml.level_detector import LevelDetector
-from llm.llm import LLM
+from backend.intent_layer.intent_detector import IntentDetector
+from backend.reasoning_layer.reasoning_layer import ReasoningLayer
+from backend.teacher_layer.teacher_layer import TeacherLayer
+from backend.ml.feature_extractor import FeatureExtractor
+from backend.ml.level_detector import LevelDetector
+from backend.llm.llm import LLM
 
 
 class Pipeline:

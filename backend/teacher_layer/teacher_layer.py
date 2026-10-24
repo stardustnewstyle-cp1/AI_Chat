@@ -10,7 +10,7 @@ class TeacherLayer:
         分野ごとのテンプレートを JSON から読み込む
         domain（compare, design, steps...）をキーにする
         """
-        path = os.path.join(os.path.dirname(__file__), "..", "models", "teacher_templates.json")
+        path = os.path.join(os.path.dirname(__file__), "..", "models/templates", "teacher_templates.json")
         with open(path, "r", encoding="utf-8") as f:
             self.templates = json.load(f)
 

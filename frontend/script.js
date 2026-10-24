@@ -1,9 +1,46 @@
+// 例クリックで入力
+function fill(text) {
+    const input = document.getElementById("userInput");
+    input.value = text;
+    autoResize();
+    input.focus();
+}
+
+// textarea 自動リサイズ
+function autoResize() {
+    const input = document.getElementById("userInput");
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
+}
+
+document.getElementById("userInput").addEventListener("input", autoResize);
+
+// Enterで送信（Shift+Enterで改行）
+document.getElementById("userInput").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+    }
+});
+
+// 送信処理
 async function send() {
-    const text = document.getElementById("userInput").value;
+    const text = document.getElementById("userInput").value.trim();
     if (!text) return;
 
-    // チュートリアルを非表示
-    document.getElementById("tutorial").style.display = "none";
+    // チュートリアルをフェードアウト
+    const tutorial = document.getElementById("tutorial");
+    if (tutorial.style.display !== "none") {
+        tutorial.classList.add("fade-out");
+        setTimeout(() => tutorial.style.display = "none", 400);
+    }
+
+    // ローディングカード
+    const result = document.getElementById("result");
+    const loading = document.createElement("div");
+    loading.className = "card";
+    loading.innerHTML = "<p>考え中...</p>";
+    result.appendChild(loading);
 
     const response = await fetch("http://localhost:8000/ask", {
         method: "POST",
@@ -12,29 +49,31 @@ async function send() {
     });
 
     const data = await response.json();
+    result.removeChild(loading);
+
     render(data);
 }
 
+// レンダリング
 function render(data) {
     const result = document.getElementById("result");
-    result.innerHTML = "";
 
-    // 非技術質問カード
+    // 非技術質問
     if (data.title === "非技術質問") {
         const card = document.createElement("div");
-        card.className = "card nontech-card";
+        card.className = "card nontech";
         card.innerHTML = `
-            <h2>${data.title}</h2>
+            <h3>${data.title}</h3>
             <p>${data.sections[0].content}</p>
         `;
         result.appendChild(card);
         return;
     }
 
-    // Copilot 型：セクションごとにカード分割
+    // セクションごとにカード化
     data.sections.forEach(sec => {
         const card = document.createElement("div");
-        card.className = "card section-card";
+        card.className = "card";
 
         card.innerHTML += `<h3>${sec.header}</h3>`;
 
@@ -59,9 +98,10 @@ function render(data) {
         }
 
         if (sec.code) {
-            card.innerHTML += `<pre>${sec.code}</pre>`;
+            card.innerHTML += `<pre><code>${sec.code}</code></pre>`;
         }
 
         result.appendChild(card);
+        hljs.highlightAll();
     });
 }
