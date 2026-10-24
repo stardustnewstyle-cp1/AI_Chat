@@ -56,10 +56,8 @@ async function send() {
     const text = input.value.trim();
     if (!text) return;
 
-    // ユーザー入力を画面に表示
     appendMessage("user", text);
 
-    // 入力欄はクリア
     input.value = "";
     autoResize();
 
@@ -70,12 +68,18 @@ async function send() {
             body: JSON.stringify({ text })
         });
 
-        if (!response.ok) throw new Error("API error");
+        if (!response.ok) {
+            throw new Error("API error");
+        }
 
         const data = await response.json();
-        const answer = flattenSections(data);
 
-        // 回答をその下に表示
+        if (data.mode === "external") {
+            appendMessage("assistant", "外部情報が必要です。検索が必要な質問です。");
+            return;
+        }
+
+        const answer = flattenSections(data);
         appendMessage("assistant", answer);
 
     } catch (error) {

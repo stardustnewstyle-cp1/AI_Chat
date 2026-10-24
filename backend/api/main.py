@@ -22,53 +22,64 @@ class Query(BaseModel):
     text: str
 
 
-def should_use_code_mode(text: str) -> bool:
-    lower = text.lower()
-    keywords = [
-        "コード",
-        "コード例",
-        "実装例",
-        "サンプルコード",
-        "書いて",
-        "例を見せて",
-        "api の使い方",
-        "関数",
-        "class",
-    ]
-    return any(keyword in lower for keyword in keywords)
-
-
 @app.post("/ask")
 def ask(query: Query):
-    text = query.text
+    text = query.text.strip()
 
-    if should_use_code_mode(text):
-        result = pipeline.run(text) or {}
-        if not isinstance(result, dict):
-            result = {}
+    local_keywords = [
+        "this code",
+        "this file",
+        "this repository",
+        "this api",
+        "error",
+        "design",
+        "implementation",
+        "code",
+        "class",
+        "import",
+        "function",
+        "project",
+        "architecture",
+        "bug",
+        "fix",
+        "refactor",
+        "system design",
+        "backend",
+        "frontend",
+        "database",
+        "python",
+        "javascript",
+        "typescript",
+        "java",
+        "c#",
+        "go",
+        "rust",
+    ]
 
-        code_text = result.get("code")
-        if not code_text:
-            code_text = "コード生成用の情報が不足しています。"
+    local_only = any(keyword in text.lower() for keyword in local_keywords)
+
+    if local_only:
+        raw = pipeline.run(text) or {}
+        if not isinstance(raw, dict):
+            raw = {}
+
+        sections = raw.get("sections", [])
+        if not isinstance(sections, list):
+            sections = []
 
         return {
-            "mode": "code",
-            "title": "コード例",
-            "sections": [
-                {"header": "コード", "code": code_text}
-            ]
+            "mode": "local",
+            "title": "ローカル知識ベースの回答",
+            "sections": sections
         }
 
-    raw = pipeline.run(text) or {}
-    if not isinstance(raw, dict):
-        raw = {}
-
-    sections = raw.get("sections", [])
-    if not isinstance(sections, list):
-        sections = []
-
     return {
-        "mode": "answer",
-        "title": "回答",
-        "sections": sections
+        "mode": "external",
+        "title": "外部情報が必要",
+        "sections": [
+            {
+                "header": "外部情報が必要です",
+                "content": "この質問はローカル知識だけでは十分に答えられません。検索が必要です。"
+            }
+        ]
     }
