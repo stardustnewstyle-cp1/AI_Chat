@@ -1,4 +1,3 @@
-#main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -45,7 +44,7 @@ def ask(query: Query):
     if should_use_code_mode(text):
         result = pipeline.run(text)
 
-        code_text = result.get("code", None)
+        code_text = result.get("code")
         if not code_text:
             code_text = "コード生成用の情報が不足しています。"
 
