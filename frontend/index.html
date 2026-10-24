@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <title>Tech AI Assistant</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 </head>
 <body>
 
@@ -24,17 +21,28 @@
     </header>
 
     <main class="main">
-        <div id="tutorial" class="tutorial-wrap">
-            <div class="tutorial-card">
-                <h2>このAIは技術専用です</h2>
-                <p>技術に関係ない質問には回答できません。</p>
-            </div>
+        <section id="tutorial" class="tutorial-panel">
+            <h1>技術特化 AI へようこそ</h1>
+            <p>この AI は、プログラミング・AI・設計・アーキテクチャなどの技術質問に特化しています。</p>
 
-            <div class="tutorial-card">
-                <h2>このAIは技術専用です</h2>
-                <p>技術に関係ない質問には回答できません。</p>
-            </div>
-        </div>
+            <h2>できること</h2>
+            <ul>
+                <li>コードの解説</li>
+                <li>設計の比較</li>
+                <li>アーキテクチャの説明</li>
+                <li>手順の提示</li>
+                <li>改善案の提示</li>
+            </ul>
+
+            <h2>入力例（クリックで入力）</h2>
+            <ul class="example-list">
+                <li onclick="fill('Python のクラスの仕組みを教えて')">Python のクラスの仕組みを教えて</li>
+                <li onclick="fill('REST と GraphQL の違いは？')">REST と GraphQL の違いは？</li>
+                <li onclick="fill('非同期処理の設計で気をつける点は？')">非同期処理の設計で気をつける点は？</li>
+            </ul>
+
+            <p class="hint">下の入力欄に質問を入力してください。</p>
+        </section>
 
         <div id="result" class="chat-area"></div>
     </main>

@@ -6,8 +6,8 @@ html, body {
     margin: 0;
     width: 100%;
     height: 100%;
-    font-family: sans-serif;
     background: #eeeeee;
+    font-family: sans-serif;
 }
 
 body {
@@ -60,40 +60,63 @@ body {
     padding: 18px 20px 120px;
     display: flex;
     flex-direction: column;
-}
-
-.tutorial-wrap {
-    display: flex;
-    flex-direction: column;
     gap: 18px;
-    margin-bottom: 18px;
 }
 
-.tutorial-card {
-    background: #f8f8f8;
-    border-left: 4px solid #5b8df7;
-    border-radius: 8px;
-    padding: 24px 26px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+.tutorial-panel {
+    width: min(780px, 90%);
+    margin: 0 auto;
+    background: #f3f3f3;
+    border: 3px solid #5c8ef7;
+    border-radius: 10px;
+    padding: 28px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.tutorial-card h2 {
-    margin: 0 0 10px;
-    font-size: 26px;
-    font-weight: 700;
+.tutorial-panel h1 {
+    margin: 0 0 18px;
+    font-size: 30px;
     color: #111;
 }
 
-.tutorial-card p {
-    margin: 0;
+.tutorial-panel h2 {
+    margin: 16px 0 8px;
     font-size: 22px;
-    color: #222;
+    color: #111;
+}
+
+.tutorial-panel p,
+.tutorial-panel li {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #1f1f1f;
+}
+
+.example-list {
+    list-style: disc;
+    padding-left: 28px;
+    margin: 0 0 18px;
+}
+
+.example-list li {
+    cursor: pointer;
+    color: #1b6be7;
+    text-decoration: underline;
+    margin-bottom: 6px;
+}
+
+.hint {
+    margin-top: 14px;
+    font-size: 18px;
 }
 
 .chat-area {
+    width: min(900px, 92%);
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    padding-bottom: 30px;
 }
 
 .message {

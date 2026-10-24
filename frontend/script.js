@@ -1,3 +1,10 @@
+function fill(text) {
+    const input = document.getElementById("userInput");
+    input.value = text;
+    autoResize();
+    input.focus();
+}
+
 function autoResize() {
     const input = document.getElementById("userInput");
     input.style.height = "auto";
@@ -49,8 +56,10 @@ async function send() {
     const text = input.value.trim();
     if (!text) return;
 
+    // ユーザー入力を画面に表示
     appendMessage("user", text);
 
+    // 入力欄はクリア
     input.value = "";
     autoResize();
 
@@ -61,13 +70,12 @@ async function send() {
             body: JSON.stringify({ text })
         });
 
-        if (!response.ok) {
-            throw new Error("API error");
-        }
+        if (!response.ok) throw new Error("API error");
 
         const data = await response.json();
         const answer = flattenSections(data);
 
+        // 回答をその下に表示
         appendMessage("assistant", answer);
 
     } catch (error) {
