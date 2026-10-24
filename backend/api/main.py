@@ -1,9 +1,9 @@
+#main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.pipelines.pipeline import Pipeline
-from backend.pipelines.pipeline_code import CodePipeline
 from backend.llm.llm import LLM
 
 app = FastAPI()
@@ -17,7 +17,6 @@ app.add_middleware(
 )
 
 pipeline = Pipeline(llm=LLM())
-code_pipeline = CodePipeline(llm=LLM())
 
 class Query(BaseModel):
     text: str
@@ -44,15 +43,10 @@ def ask(query: Query):
     text = query.text
 
     if should_use_code_mode(text):
-        result = code_pipeline.run(text, api_info=None)
+        result = pipeline.run(text)
 
-        code_text = None
-        if result.get("llm_output") is not None:
-            code_text = result["llm_output"]
-        elif result.get("code_output") is not None:
-            code_text = result["code_output"]
-
-        if code_text is None:
+        code_text = result.get("code", None)
+        if not code_text:
             code_text = "コード生成用の情報が不足しています。"
 
         return {

@@ -12,7 +12,6 @@ body {
     padding-bottom: 180px;
 }
 
-/* チュートリアル */
 .tutorial-card {
     background: white;
     padding: 25px;
@@ -31,7 +30,6 @@ body {
     text-decoration: underline;
 }
 
-/* チャットカード */
 .card {
     background: white;
     padding: 24px;
@@ -40,10 +38,6 @@ body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     border-left: 6px solid #3a82f7;
     animation: fadeIn 0.3s ease;
-}
-
-.nontech {
-    border-left-color: #e24a4a;
 }
 
 .code-card {
@@ -64,7 +58,6 @@ body {
     line-height: 1.6;
 }
 
-/* 入力欄（画面下固定） */
 .input-bar {
     position: fixed;
     bottom: 0;

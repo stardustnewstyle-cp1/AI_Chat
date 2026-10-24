@@ -91,15 +91,13 @@ function render(data) {
         const code = document.createElement("code");
         code.textContent = codeText;
         pre.appendChild(code);
-
         card.appendChild(pre);
-        result.appendChild(card);
 
+        result.appendChild(card);
         hljs.highlightAll();
         return;
     }
 
-    // 通常 answer モード
     if (!data.sections || !Array.isArray(data.sections)) {
         const err = document.createElement("div");
         err.className = "card";
