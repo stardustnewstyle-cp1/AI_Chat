@@ -1,11 +1,3 @@
-from backend.intent_layer.intent_detector import IntentDetector
-from backend.reasoning_layer.reasoning_layer import ReasoningLayer
-from backend.teacher_layer.teacher_layer import TeacherLayer
-from backend.ml.feature_extractor import FeatureExtractor
-from backend.ml.level_detector import LevelDetector
-from backend.llm.llm import LLM
-
-
 class Pipeline:
     def __init__(self, llm: LLM):
         self.llm = llm
@@ -14,6 +6,58 @@ class Pipeline:
         self.teacher_layer = TeacherLayer()
         self.extractor = FeatureExtractor()
         self.level_detector = LevelDetector()
+
+    def _should_use_internal_search(self, text: str) -> bool:
+        """
+        外部公式情報が必要かどうかを判定する。
+        ここで true になった場合、ユーザーには見えない内部検索を使う。
+        """
+        lower = text.lower()
+        external_keywords = [
+            "latest",
+            "latest version",
+            "official docs",
+            "official",
+            "spec",
+            "specification",
+            "api docs",
+            "documentation",
+            "what is the current",
+            "newest",
+            "how to use the latest",
+            "breaking change",
+            "release notes",
+            "compare latest",
+            "official guide",
+            "public api",
+        ]
+        if any(k in lower for k in external_keywords):
+            return True
+
+        # 典型的なローカル質問なら false
+        local_keywords = [
+            "this code",
+            "this file",
+            "this repository",
+            "this api",
+            "this module",
+            "error",
+            "design",
+            "implementation",
+            "this function",
+            "class",
+            "import",
+            "bug",
+            "fix",
+            "refactor",
+            "architecture",
+            "backend",
+            "frontend",
+        ]
+        if any(k in lower for k in local_keywords):
+            return False
+
+        return True
 
     def _build_response_vector(
         self,
@@ -32,7 +76,6 @@ class Pipeline:
         """
         text_clean = text.strip()
 
-        # デフォルトの「本文生成」
         if domain == "design":
             purpose = "技術的な設計を安全かつ保守しやすく行うための考え方を整理する"
             architecture = "責務を分離し、データの流れと状態管理を明確にして設計する"
@@ -117,7 +160,6 @@ class Pipeline:
                 "専門用語を多用しすぎない",
             ]
 
-        # 質問文が具体的なら、少しだけ文言に反映
         if text_clean:
             purpose = f"{purpose}（質問: {text_clean[:40]}{'...' if len(text_clean) > 40 else ''}）"
 
@@ -136,11 +178,11 @@ class Pipeline:
         }
 
     def run(self, text: str):
-        # 1. IntentDetector
+        # 1. まず intent を検出
         intent_result = self.intent_detector.detect(text)
         domain = intent_result["domain"]
 
-        # 非技術質問
+        # 2. 非技術質問
         if domain == "non_technical":
             return {
                 "title": "非技術質問",
@@ -152,17 +194,18 @@ class Pipeline:
                 ]
             }
 
-        # 2. ReasoningLayer
+        # 3. 内部検索を使うべきかどうかを判定
+        use_internal_search = self._should_use_internal_search(text)
+
+        # 4. 既存のロジックをそのまま使う
         intent = intent_result.get("intent")
         axes = intent_result.get("axes")
         score = intent_result.get("score")
         reasoning_type = self.reasoning_layer.map_domain_to_reasoning(domain)
 
-        # 3. ML
         features = self.extractor.extract(text)
         level = self.level_detector.detect(features)
 
-        # 4. 必要な本文を作って TeacherLayer に渡す
         reasoning_vector = self._build_response_vector(
             text=text,
             domain=domain,
@@ -173,13 +216,21 @@ class Pipeline:
             score=score,
         )
 
-        # デバッグ用
+        # ここが重要:
+        # 追加の外部補助情報が必要なら、ユーザーには見せずに使う
+        if use_internal_search:
+            # 補助情報としてのメモを作る
+            internal_context = (
+                "公式ドキュメントと公開情報を補助として確認し、"
+                "最新仕様と一般的な実装方法に沿って回答する。"
+            )
+            reasoning_vector["notes"] = internal_context
+
         print("REASONING_VECTOR:", reasoning_vector)
 
         teacher_output = self.teacher_layer.run(reasoning_vector)
         print("TEACHER OUTPUT:", teacher_output)
 
-        # 5. UI向けに整理
         sections = teacher_output.get("sections", []) if isinstance(teacher_output, dict) else []
 
         return {

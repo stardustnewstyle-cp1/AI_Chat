@@ -121,15 +121,16 @@ body {
 
 .message {
     display: flex;
+    flex-direction: column;
     width: 100%;
 }
 
 .message.user {
-    justify-content: flex-end;
+    align-items: flex-end;
 }
 
 .message.assistant {
-    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .bubble {
@@ -153,6 +154,29 @@ body {
     background: white;
     color: #1a1a1a;
     border-bottom-left-radius: 6px;
+}
+
+.followup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    max-width: 75%;
+}
+
+.followup-btn {
+    border: none;
+    background: #6b2ed4;
+    color: white;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.followup-btn:hover {
+    background: #5a27c5;
 }
 
 .input-bar {
