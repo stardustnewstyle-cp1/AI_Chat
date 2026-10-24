@@ -15,6 +15,58 @@ class Pipeline:
         self.extractor = FeatureExtractor()
         self.level_detector = LevelDetector()
 
+    def _is_technical_question(self, text: str) -> bool:
+        """
+        技術質問かどうかを簡易的に判定する。
+        これが true なら non_technical 判定を通さない。
+        """
+        lower = text.lower()
+        technical_keywords = [
+            "python",
+            "javascript",
+            "typescript",
+            "java",
+            "go",
+            "rust",
+            "class",
+            "クラス",
+            "api",
+            "api docs",
+            "design",
+            "設計",
+            "implementation",
+            "実装",
+            "code",
+            "コード",
+            "function",
+            "関数",
+            "error",
+            "エラー",
+            "bug",
+            "バグ",
+            "fix",
+            "修正",
+            "refactor",
+            "リファクタ",
+            "architecture",
+            "アーキテクチャ",
+            "backend",
+            "frontend",
+            "database",
+            "db",
+            "sql",
+            "docker",
+            "kubernetes",
+            "system design",
+            "プロジェクト",
+            "this code",
+            "this file",
+            "this repository",
+            "this function",
+            "this api",
+        ]
+        return any(keyword in lower for keyword in technical_keywords)
+
     def _should_use_internal_search(self, text: str) -> bool:
         """
         外部公式情報が必要かどうかを判定する。
@@ -186,12 +238,28 @@ class Pipeline:
         }
 
     def run(self, text: str):
-        # 1. まず intent を検出
-        intent_result = self.intent_detector.detect(text)
-        domain = intent_result["domain"]
+        text = text.strip()
+        if not text:
+            return {
+                "title": "入力がありません",
+                "sections": [
+                    {
+                        "header": "入力してください",
+                        "content": "質問を入力してください。"
+                    }
+                ]
+            }
+
+        # ここが重要:
+        # 技術キーワードがあるなら、まず技術質問として扱う
+        if self._is_technical_question(text):
+            intent_result = self.intent_detector.detect(text)
+            domain = intent_result["domain"]
+        else:
+            intent_result = {"domain": "non_technical", "intent": "general", "axes": {}, "score": 0.0}
 
         # 2. 非技術質問
-        if domain == "non_technical":
+        if intent_result.get("domain") == "non_technical":
             return {
                 "title": "非技術質問",
                 "sections": [

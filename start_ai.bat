@@ -1,6 +1,10 @@
 @echo off
 cd /d %~dp0
 
+REM 古い uvicorn と python を落とす
+taskkill /F /IM python.exe 2>nul
+taskkill /F /IM uvicorn.exe 2>nul
+
 call venv\Scripts\activate.bat
 
 REM フロントを起動
