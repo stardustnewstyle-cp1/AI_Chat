@@ -56,24 +56,36 @@ def is_local_question(text: str) -> bool:
     return any(keyword in lower for keyword in local_keywords)
 
 
+def build_response(raw: dict | None, mode: str) -> dict:
+    if not isinstance(raw, dict):
+        raw = {}
+
+    sections = raw.get("sections", [])
+    if not isinstance(sections, list):
+        sections = []
+
+    title = raw.get("title")
+    if not title:
+        title = "ローカル知識ベースの回答" if mode == "local" else "内部検索付き回答"
+
+    return {
+        "mode": mode,
+        "title": title,
+        "intent": raw.get("intent"),
+        "reasoning": raw.get("reasoning"),
+        "level": raw.get("level"),
+        "score": raw.get("score"),
+        "sections": sections,
+    }
+
+
 @app.post("/ask")
 def ask(query: Query):
     text = query.text.strip()
 
     if is_local_question(text):
         raw = pipeline.run(text) or {}
-        if not isinstance(raw, dict):
-            raw = {}
-
-        sections = raw.get("sections", [])
-        if not isinstance(sections, list):
-            sections = []
-
-        return {
-            "mode": "local",
-            "title": "ローカル知識ベースの回答",
-            "sections": sections
-        }
+        return build_response(raw, "local")
 
     # 外部検索はユーザーに見せない
     # ここでは内部補助情報を与えて、質問をより確実に処理する
@@ -88,15 +100,4 @@ def ask(query: Query):
         """
     ) or {}
 
-    if not isinstance(enriched, dict):
-        enriched = {}
-
-    sections = enriched.get("sections", [])
-    if not isinstance(sections, list):
-        sections = []
-
-    return {
-        "mode": "external",
-        "title": "内部検索付き回答",
-        "sections": sections
-    }
+    return build_response(enriched, "external")
