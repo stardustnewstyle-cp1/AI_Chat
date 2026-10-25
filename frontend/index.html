@@ -6,53 +6,52 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="app">
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="dot"></span>
+                <span>localhost:8080</span>
+            </div>
+            <div class="topbar-icons">
+                <span>☆</span>
+                <span>⎈</span>
+                <span>⋯</span>
+            </div>
+        </header>
 
-<div class="app">
-    <header class="topbar">
-        <div class="topbar-left">
-            <span class="dot"></span>
-            <span>localhost:8080</span>
+        <main class="main">
+            <section id="tutorial" class="tutorial-panel">
+                <h1>技術 AI へようこそ</h1>
+                <p>この AI は、プログラミング・AI・設計・アーキテクチャ・開発全般について話せます。</p>
+
+                <h2>できること</h2>
+                <ul>
+                    <li>コードの解説</li>
+                    <li>設計の比較</li>
+                    <li>アーキテクチャの説明</li>
+                    <li>エラーの原因調査</li>
+                    <li>実装の改善案</li>
+                </ul>
+
+                <h2>入力例（クリックで入力）</h2>
+                <ul class="example-list">
+                    <li onclick="fill('Python のクラスの仕組みを教えて')">Python のクラスの仕組みを教えて</li>
+                    <li onclick="fill('REST と GraphQL の違いは？')">REST と GraphQL の違いは？</li>
+                    <li onclick="fill('非同期処理の設計で気をつける点は？')">非同期処理の設計で気をつける点は？</li>
+                </ul>
+
+                <p class="hint">下の入力欄に技術について質問してください。</p>
+            </section>
+
+            <div id="result" class="chat-area"></div>
+        </main>
+
+        <div class="input-bar">
+            <textarea id="userInput" rows="1" placeholder="技術的な質問を入力してください..."></textarea>
+            <button id="sendButton" type="button">送信</button>
         </div>
-        <div class="topbar-icons">
-            <span>☆</span>
-            <span>⎈</span>
-            <span>⋯</span>
-        </div>
-    </header>
-
-    <main class="main">
-        <section id="tutorial" class="tutorial-panel">
-            <h1>技術 AI へようこそ</h1>
-            <p>この AI は、プログラミング・AI・設計・アーキテクチャ・開発全般について話せます。</p>
-
-            <h2>できること</h2>
-            <ul>
-                <li>コードの解説</li>
-                <li>設計の比較</li>
-                <li>アーキテクチャの説明</li>
-                <li>エラーの原因調査</li>
-                <li>実装の改善案</li>
-            </ul>
-
-            <h2>入力例（クリックで入力）</h2>
-            <ul class="example-list">
-                <li onclick="fill('Python のクラスの仕組みを教えて')">Python のクラスの仕組みを教えて</li>
-                <li onclick="fill('REST と GraphQL の違いは？')">REST と GraphQL の違いは？</li>
-                <li onclick="fill('非同期処理の設計で気をつける点は？')">非同期処理の設計で気をつける点は？</li>
-            </ul>
-
-            <p class="hint">下の入力欄に技術について質問してください。</p>
-        </section>
-
-        <div id="result" class="chat-area"></div>
-    </main>
-
-    <div class="input-bar">
-        <textarea id="userInput" rows="1" placeholder="質問を入力..."></textarea>
-        <button id="sendButton" type="button">送信</button>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

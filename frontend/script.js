@@ -13,7 +13,14 @@ function autoResize() {
     input.style.height = input.scrollHeight + "px";
 }
 
+function hideTutorial() {
+    const tutorial = document.getElementById("tutorial");
+    if (tutorial) tutorial.style.display = "none";
+}
+
 function appendMessage(role, text) {
+    hideTutorial();
+
     const result = document.getElementById("result");
     const message = document.createElement("div");
     message.className = `message ${role}`;
@@ -58,21 +65,104 @@ function appendFollowUp(text, actions) {
     result.scrollTop = result.scrollHeight;
 }
 
-function flattenSections(data) {
-    if (!data || !data.sections || !Array.isArray(data.sections)) {
-        return "回答を取得できませんでした。";
+function createBadge(label, tone = "purple") {
+    const badge = document.createElement("span");
+    badge.className = `meta-badge ${tone}`;
+    badge.textContent = label;
+    return badge;
+}
+
+function renderSection(section) {
+    if (!section || typeof section !== "object") return null;
+
+    const block = document.createElement("div");
+    block.className = "section-block";
+
+    if (section.header) {
+        const header = document.createElement("h3");
+        header.className = "section-header";
+        header.textContent = section.header;
+        block.appendChild(header);
     }
 
-    const parts = [];
-    data.sections.forEach((sec) => {
-        if (sec.header) parts.push(sec.header);
-        if (sec.content) parts.push(sec.content);
-        if (sec.list) parts.push(sec.list.join("\n"));
-        if (sec.steps) parts.push(sec.steps.join("\n"));
-        if (sec.code) parts.push(sec.code);
+    if (section.content) {
+        const content = document.createElement("p");
+        content.className = "section-content";
+        content.textContent = section.content;
+        block.appendChild(content);
+    }
+
+    if (Array.isArray(section.list) && section.list.length > 0) {
+        const ul = document.createElement("ul");
+        ul.className = "section-list";
+        section.list.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            ul.appendChild(li);
+        });
+        block.appendChild(ul);
+    }
+
+    if (Array.isArray(section.steps) && section.steps.length > 0) {
+        const ol = document.createElement("ol");
+        ol.className = "section-steps";
+        section.steps.forEach((step) => {
+            const li = document.createElement("li");
+            li.textContent = step;
+            ol.appendChild(li);
+        });
+        block.appendChild(ol);
+    }
+
+    if (section.code) {
+        const pre = document.createElement("pre");
+        pre.className = "section-code";
+        const code = document.createElement("code");
+        code.textContent = section.code;
+        pre.appendChild(code);
+        block.appendChild(pre);
+    }
+
+    return block;
+}
+
+function renderAnswerCard(data) {
+    const result = document.getElementById("result");
+    hideTutorial();
+
+    const message = document.createElement("div");
+    message.className = "message assistant";
+
+    const card = document.createElement("div");
+    card.className = "answer-card";
+
+    const title = document.createElement("div");
+    title.className = "answer-title";
+    title.textContent = data.title || "回答";
+
+    const meta = document.createElement("div");
+    meta.className = "answer-meta";
+
+    const intent = data.intent ? createBadge(`Intent: ${data.intent}`, "blue") : null;
+    const reasoning = data.reasoning ? createBadge(`Reasoning: ${data.reasoning}`, "purple") : null;
+    const level = data.level ? createBadge(`Level: ${data.level}`, "green") : null;
+
+    if (intent) meta.appendChild(intent);
+    if (reasoning) meta.appendChild(reasoning);
+    if (level) meta.appendChild(level);
+
+    card.appendChild(title);
+    card.appendChild(meta);
+
+    const sections = Array.isArray(data.sections) ? data.sections : [];
+    sections.forEach((section) => {
+        const rendered = renderSection(section);
+        if (rendered) card.appendChild(rendered);
     });
 
-    return parts.join("\n\n");
+    message.appendChild(card);
+    result.appendChild(message);
+    result.scrollTop = result.scrollHeight;
 }
 
 function defaultFollowUps() {
@@ -98,7 +188,7 @@ function defaultFollowUps() {
         {
             label: "別質問にする",
             onClick: () => {
-                appendMessage("assistant", "質問をもう少し具体的にしていただければ、より正確に答えられます。");
+                appendMessage("assistant", "質問をもう少し具体的にしてください。例えば「このコードの」「このAPIの」「エラー原因の」などです。");
             }
         }
     ];
@@ -174,13 +264,8 @@ async function send() {
             return;
         }
 
-        const answer = flattenSections(data);
-        appendMessage("assistant", answer);
-
-        appendFollowUp(
-            "必要なら次のどれかを選んでください。",
-            defaultFollowUps()
-        );
+        renderAnswerCard(data);
+        appendFollowUp("必要なら次のどれかを選んでください。", defaultFollowUps());
 
     } catch (error) {
         appendMessage("assistant", "通信エラーが発生しました。");
