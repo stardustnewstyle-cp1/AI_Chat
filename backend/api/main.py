@@ -1,3 +1,4 @@
+#main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -15,45 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-pipeline = Pipeline(llm=LLM())
-
+pipeline = Pipeline(
+    llm=LLM(),
+    external_api_key=""
+)
 
 class Query(BaseModel):
     text: str
-
-
-def is_local_question(text: str) -> bool:
-    lower = text.lower()
-    local_keywords = [
-        "this code",
-        "this file",
-        "this repository",
-        "this module",
-        "this api",
-        "this function",
-        "error",
-        "design",
-        "implementation",
-        "code",
-        "class",
-        "import",
-        "function",
-        "architecture",
-        "project",
-        "bug",
-        "fix",
-        "refactor",
-        "backend",
-        "frontend",
-        "database",
-        "python",
-        "javascript",
-        "typescript",
-        "java",
-        "go",
-        "rust",
-    ]
-    return any(keyword in lower for keyword in local_keywords)
 
 
 def build_response(raw: dict | None, mode: str) -> dict:
@@ -64,9 +33,9 @@ def build_response(raw: dict | None, mode: str) -> dict:
     if not isinstance(sections, list):
         sections = []
 
-    title = raw.get("title")
-    if not title:
-        title = "ローカル知識ベースの回答" if mode == "local" else "内部検索付き回答"
+    title = raw.get("title") or (
+        "ローカル知識ベースの回答" if mode == "local" else "内部検索付き回答"
+    )
 
     return {
         "mode": mode,
@@ -80,24 +49,19 @@ def build_response(raw: dict | None, mode: str) -> dict:
 
 
 @app.post("/ask")
-def ask(query: Query):
+async def ask(query: Query):
     text = query.text.strip()
 
-    if is_local_question(text):
-        raw = pipeline.run(text) or {}
+    # pipeline 実行
+    raw = await pipeline.run(text) or {}
+
+    # 非技術質問なら mode = local
+    if raw.get("title") == "非技術質問":
         return build_response(raw, "local")
 
-    # 外部検索はユーザーに見せない
-    # ここでは内部補助情報を与えて、質問をより確実に処理する
-    enriched = pipeline.run(
-        f"""
-        ユーザーの質問:
-        {text}
+    # pipeline が外部検索を使ったかどうか
+    used_external = raw.get("notes") is not None
 
-        補助情報:
-        公式ドキュメントと公開情報を補助として確認し、
-        最新仕様や一般的な実装方法に沿って回答する。
-        """
-    ) or {}
+    mode = "external" if used_external else "local"
 
-    return build_response(enriched, "external")
+    return build_response(raw, mode)

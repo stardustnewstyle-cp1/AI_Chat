@@ -1,5 +1,8 @@
 let isSending = false;
 
+/* -----------------------------
+ * 入力補助
+ * ----------------------------- */
 function fill(text) {
     const input = document.getElementById("userInput");
     input.value = text;
@@ -18,6 +21,9 @@ function hideTutorial() {
     if (tutorial) tutorial.style.display = "none";
 }
 
+/* -----------------------------
+ * メッセージ描画（ユーザー・AI）
+ * ----------------------------- */
 function appendMessage(role, text) {
     hideTutorial();
 
@@ -34,6 +40,9 @@ function appendMessage(role, text) {
     result.scrollTop = result.scrollHeight;
 }
 
+/* -----------------------------
+ * Follow-up ボタン描画
+ * ----------------------------- */
 function appendFollowUp(text, actions) {
     const result = document.getElementById("result");
     const message = document.createElement("div");
@@ -65,6 +74,9 @@ function appendFollowUp(text, actions) {
     result.scrollTop = result.scrollHeight;
 }
 
+/* -----------------------------
+ * バッジ生成
+ * ----------------------------- */
 function createBadge(label, tone = "purple") {
     const badge = document.createElement("span");
     badge.className = `meta-badge ${tone}`;
@@ -72,6 +84,9 @@ function createBadge(label, tone = "purple") {
     return badge;
 }
 
+/* -----------------------------
+ * セクション描画
+ * ----------------------------- */
 function renderSection(section) {
     if (!section || typeof section !== "object") return null;
 
@@ -126,6 +141,9 @@ function renderSection(section) {
     return block;
 }
 
+/* -----------------------------
+ * ★ カード描画（ここが今回の修正ポイント）
+ * ----------------------------- */
 function renderAnswerCard(data) {
     const result = document.getElementById("result");
     hideTutorial();
@@ -136,35 +154,38 @@ function renderAnswerCard(data) {
     const card = document.createElement("div");
     card.className = "answer-card";
 
+    /* --- Title --- */
     const title = document.createElement("div");
     title.className = "answer-title";
     title.textContent = data.title || "回答";
+    card.appendChild(title);
 
+    /* --- Meta badges --- */
     const meta = document.createElement("div");
     meta.className = "answer-meta";
 
-    const intent = data.intent ? createBadge(`Intent: ${data.intent}`, "blue") : null;
-    const reasoning = data.reasoning ? createBadge(`Reasoning: ${data.reasoning}`, "purple") : null;
-    const level = data.level ? createBadge(`Level: ${data.level}`, "green") : null;
+    if (data.intent) meta.appendChild(createBadge(data.intent, "blue"));
+    if (data.reasoning) meta.appendChild(createBadge(data.reasoning, "purple"));
+    if (data.level) meta.appendChild(createBadge(data.level, "green"));
 
-    if (intent) meta.appendChild(intent);
-    if (reasoning) meta.appendChild(reasoning);
-    if (level) meta.appendChild(level);
-
-    card.appendChild(title);
     card.appendChild(meta);
 
+    /* --- Sections --- */
     const sections = Array.isArray(data.sections) ? data.sections : [];
     sections.forEach((section) => {
         const rendered = renderSection(section);
         if (rendered) card.appendChild(rendered);
     });
 
+    /* --- Append card --- */
     message.appendChild(card);
     result.appendChild(message);
     result.scrollTop = result.scrollHeight;
 }
 
+/* -----------------------------
+ * Follow-up デフォルト
+ * ----------------------------- */
 function defaultFollowUps() {
     return [
         {
@@ -194,6 +215,9 @@ function defaultFollowUps() {
     ];
 }
 
+/* -----------------------------
+ * 入力イベント
+ * ----------------------------- */
 document.getElementById("userInput").addEventListener("input", autoResize);
 
 document.getElementById("userInput").addEventListener("keydown", (e) => {
@@ -207,6 +231,9 @@ document.getElementById("sendButton").addEventListener("click", () => {
     send();
 });
 
+/* -----------------------------
+ * API 送信
+ * ----------------------------- */
 async function send() {
     if (isSending) return;
 

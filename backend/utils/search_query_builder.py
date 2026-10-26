@@ -1,8 +1,7 @@
-# search_query_builder.py
-
+# backend/utils/search_query_builder.py
 from typing import Dict, List, Tuple
 
-# 推論タイプごとの検索テンプレート
+# --- 推論テンプレート ---
 reasoning_templates = {
     "structure": ["{topic} 仕組み", "{topic} 構造", "{topic} 全体像", "{topic} 関係性"],
     "procedure": ["{topic} 手順", "{topic} やり方", "{topic} ステップ", "{topic} 実装方法"],
@@ -16,7 +15,7 @@ reasoning_templates = {
     "abstraction": ["{topic} 抽象化", "{topic} 本質", "{topic} 概要"]
 }
 
-# ソース種類ごとの検索テンプレート
+# --- ソーステンプレート ---
 source_templates = {
     "qiita": ["{topic} 実装", "{topic} 手順", "{topic} トラブルシューティング"],
     "zenn": ["{topic} 解説", "{topic} 実装方法"],
@@ -32,25 +31,22 @@ source_templates = {
 def build_query(topic: str, final_vector: Dict[str, float], source: str) -> List[Tuple[str, float]]:
     """
     推論方向ベクトル × ソース種類 × 推論テンプレート
-    を使って検索クエリを生成する。
+    を使って検索クエリ候補を生成する。
     """
     queries = []
 
-    # 1. 推論タイプのテンプレートを適用
+    # 推論テンプレート
     for axis, weight in final_vector.items():
         if axis in reasoning_templates:
             for template in reasoning_templates[axis]:
-                query = template.format(topic=topic)
-                queries.append((query, weight))
+                queries.append((template.format(topic=topic), weight))
 
-    # 2. ソース種類のテンプレートを適用
+    # ソーステンプレート
     if source in source_templates:
         for template in source_templates[source]:
-            query = template.format(topic=topic)
-            # ソーステンプレートは少し重みを下げる（0.7倍）
-            queries.append((query, 0.7))
+            queries.append((template.format(topic=topic), 0.7))
 
-    # 3. 重み順に並べる
+    # 重み順に並べる
     queries.sort(key=lambda x: x[1], reverse=True)
     return queries
 
@@ -61,3 +57,12 @@ def build_top_queries(topic: str, final_vector: Dict[str, float], source: str, l
     """
     queries = build_query(topic, final_vector, source)
     return [q for q, _ in queries[:limit]]
+
+
+class SearchQueryBuilder:
+    """
+    クエリ生成器（検索実行はしない）
+    pipeline.py が検索実行エンジンと組み合わせて使う。
+    """
+    def build(self, topic: str, axes: Dict[str, float], source: str = "qiita") -> List[str]:
+        return build_top_queries(topic, axes, source)

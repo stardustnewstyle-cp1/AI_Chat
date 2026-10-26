@@ -3,7 +3,13 @@
   "design": ["purpose", "requirements", "architecture", "flow", "caution"],
   "compare": ["differences", "use_cases", "caution"],
   "steps": ["steps", "notes", "caution"],
-  "improvement": ["issues", "solutions", "steps", "caution"],
+  "improvement": [
+    "issues",
+    "solutions",
+    "design_change",
+    "effect_check",
+    "caution"
+  ],
   "summary": ["summary", "conclusion"],
   "example": ["example", "notes"],
   "anti_pattern": ["anti_patterns", "reason", "fix"],

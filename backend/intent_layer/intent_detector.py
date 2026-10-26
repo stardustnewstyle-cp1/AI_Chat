@@ -2,21 +2,48 @@
 
 import os
 import json
-import re
 
 class IntentDetector:
+    DEFAULT_TECH_TERMS = [
+        "python", "javascript", "typescript", "java", "go", "rust",
+        "rest", "graphql", "api", "http", "https", "json", "yaml",
+        "sql", "database", "db", "mysql", "postgres", "redis", "mongo",
+        "docker", "kubernetes", "aws", "gcp", "linux", "react", "vue",
+        "node", "next", "fastapi", "flask", "django", "spring",
+        "class", "function", "design", "architecture", "implementation",
+        "code", "error", "bug", "fix", "refactor", "algorithm", "model",
+        "ai", "ml", "llm", "security", "performance", "cache", "query",
+        "schema", "browser", "server", "network"
+    ]
+
     def __init__(self):
-        path = os.path.join(os.path.dirname(__file__), "..", "models/categories/", "technical_terms.json")
-        with open(path, "r", encoding="utf-8") as f:
-            self.tech_terms = set(json.load(f))
+        path = os.path.join(os.path.dirname(__file__), "..", "models", "categories", "technical_terms.json")
+
+        self.tech_terms = set(self.DEFAULT_TECH_TERMS)
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            if isinstance(data, dict):
+                terms = []
+                for value in data.values():
+                    if isinstance(value, list):
+                        terms.extend(value)
+                self.tech_terms |= {str(t).lower() for t in terms if str(t).strip()}
+
+            elif isinstance(data, list):
+                self.tech_terms |= {str(t).lower() for t in data if str(t).strip()}
+
+        except Exception:
+            # JSON が空でも壊れていても安全に fallback
+            self.tech_terms = set(self.DEFAULT_TECH_TERMS)
 
     def detect(self, user_input: str) -> dict:
         text = user_input.lower()
 
-        # 技術語彙チェック
         is_technical = any(term in text for term in self.tech_terms)
 
-        # domain 判定
         if "違い" in text or "比較" in text or "vs" in text:
             domain = "compare"
         elif "設計" in text or "architecture" in text or "デザイン" in text:
@@ -38,13 +65,8 @@ class IntentDetector:
         else:
             domain = "explain" if is_technical else "non_technical"
 
-        # intent（簡易）
         intent = domain
-
-        # axes（簡易）
         axes = {"technical": 1.0 if is_technical else 0.0}
-
-        # score（簡易）
         score = 1 if is_technical else 0
 
         return {
