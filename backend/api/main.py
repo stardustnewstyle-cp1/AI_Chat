@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from backend.pipelines.pipeline import Pipeline
 from backend.llm.llm import LLM
-from backend.llm.dummy_model_client import DummyModelClient   # ★ 追加：ローカルAI
+from backend.llm.dummy_model_client import DummyModelClient   
 
 
 app = FastAPI()
@@ -24,7 +24,7 @@ app.add_middleware(
 model_client = DummyModelClient()
 llm = LLM(model_client=model_client)
 
-# ★ Pipeline に llm を渡す（最新版の正しい形）
+# ★ Pipeline に llm を渡す
 pipeline = Pipeline(
     llm=llm,
     external_api_key=""   # 外部検索は使わない
