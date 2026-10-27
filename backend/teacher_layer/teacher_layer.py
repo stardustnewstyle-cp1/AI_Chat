@@ -1,3 +1,4 @@
+# teacher_layer.py
 import json
 import os
 
@@ -17,9 +18,35 @@ class TeacherLayer:
             for item in external_context
         ]
 
+    def _default_sections_for_domain(self, domain: str):
+        # テンプレートが無い場合の最低限かつ網羅的な構成
+        if domain == "compare":
+            return ["summary", "differences", "pros_cons", "use_cases", "caution"]
+        if domain == "design":
+            return ["purpose", "architecture", "flow", "caution", "anti_patterns"]
+        if domain == "steps":
+            return ["purpose", "steps", "caution"]
+        if domain == "caution":
+            return ["summary", "caution", "anti_patterns"]
+        if domain == "improvement":
+            return ["summary", "issues", "solutions", "effect_check"]
+        if domain == "summary":
+            return ["summary", "conclusion", "notes"]
+        if domain == "example":
+            return ["summary", "example", "notes"]
+        if domain == "specification":
+            return ["summary", "requirements", "caution"]
+        if domain == "systematize":
+            return ["summary", "requirements", "notes"]
+        return ["summary", "purpose", "notes"]
+
     def build_structure(self, reasoning_vector: dict, external_context=None) -> dict:
         domain = reasoning_vector.get("domain", "design")
-        sections = self.templates.get(domain, ["purpose", "architecture", "flow", "caution"])
+
+        # テンプレート優先、無ければデフォルト
+        sections = self.templates.get(domain)
+        if not sections:
+            sections = self._default_sections_for_domain(domain)
 
         output = {
             "title": reasoning_vector.get("title", "回答"),
@@ -31,7 +58,12 @@ class TeacherLayer:
         for kind in sections:
             block = self._build_section(kind, reasoning_vector, formatted_external)
             if block is not None:
-                output["sections"].append(block)
+                # 実データが無いセクションは追加しない（必要最小限で賢く）
+                if any(
+                    key in block and block[key]
+                    for key in ("content", "list", "steps", "code", "pros", "cons")
+                ):
+                    output["sections"].append(block)
 
         if formatted_external:
             output["sections"].append({
@@ -97,36 +129,26 @@ class TeacherLayer:
         if kind == "requirements":
             return {"header": "要件", "list": rv.get("requirements", [])}
 
-        # --- 改善系（今回の追加） ---
+        # --- 改善系 ---
         if kind == "issues":
-            return {
-                "header": "課題",
-                "list": rv.get("issues", [])
-            }
+            return {"header": "課題", "list": rv.get("issues", [])}
 
         if kind == "solutions":
-            return {
-                "header": "改善方針",
-                "list": rv.get("solutions", [])
-            }
+            return {"header": "改善方針", "list": rv.get("solutions", [])}
 
         if kind == "design_change":
-            return {
-                "header": "設計変更",
-                "content": rv.get("design_change", "")
-            }
+            return {"header": "設計変更", "content": rv.get("design_change", "")}
 
         if kind == "effect_check":
-            return {
-                "header": "効果検証",
-                "list": rv.get("effect_check", [])
-            }
+            return {"header": "効果検証", "list": rv.get("effect_check", [])}
 
-        # --- 未実装セクション ---
+        # --- 未実装セクション（デバッグ用） ---
         return {
             "header": kind,
             "content": f"[未実装セクション: {kind}]"
         }
 
     def run(self, reasoning_vector: dict, external_context=None) -> dict:
-        return self.build_structure(reasoning_vector, external_context)
+        output = self.build_structure(reasoning_vector, external_context)
+        print(f"[TeacherLayer] sections_count = {len(output.get('sections', []))}")
+        return output

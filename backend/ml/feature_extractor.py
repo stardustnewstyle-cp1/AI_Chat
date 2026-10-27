@@ -1,5 +1,5 @@
-#feature_extraction.py
-import re
+# feature_extraction.py
+import ast
 
 class FeatureExtractor:
     LOGIC_CONNECTIVES = ["しかし", "つまり", "一方で", "なぜなら", "だから", "そのため"]
@@ -8,6 +8,7 @@ class FeatureExtractor:
     def extract(self, text):
         features = {}
 
+        # --- 既存の文章解析 ---
         features["connectives"] = self._count_connectives(text)
         features["structure_score"] = self._structure_score(text)
         features["causal_links"] = self._count_causal_links(text)
@@ -20,8 +21,15 @@ class FeatureExtractor:
         features["section_flow"] = self._section_flow(text)
         features["hierarchy_depth"] = self._hierarchy_depth(text)
 
+        # --- コード解析 ---
+        code_features = self._extract_code_features(text)
+        features.update(code_features)
+
         return features
 
+    # -------------------------
+    # 文章解析
+    # -------------------------
     def _count_connectives(self, text):
         return sum(text.count(c) for c in self.LOGIC_CONNECTIVES)
 
@@ -58,3 +66,64 @@ class FeatureExtractor:
 
     def _hierarchy_depth(self, text):
         return text.count("・") + text.count("-")
+
+    # -------------------------
+    # コード解析
+    # -------------------------
+    def _extract_code_features(self, text):
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            
+            print("[FeatureExtractor] AST parse failed — treating as plain text")
+
+            return {
+                "loop_count": 0,
+                "nest_depth": 0,
+                "function_count": 0,
+                "class_count": 0,
+                "async_used": 0,
+                "try_except": 0,
+            }
+
+        loop_count = 0
+        nest_depth = 0
+        function_count = 0
+        class_count = 0
+        async_used = 0
+        try_except = 0
+
+        def walk(node, depth=0):
+            nonlocal loop_count, nest_depth, function_count, class_count, async_used, try_except
+
+            nest_depth = max(nest_depth, depth)
+
+            if isinstance(node, (ast.For, ast.While)):
+                loop_count += 1
+
+            if isinstance(node, ast.FunctionDef):
+                function_count += 1
+
+            if isinstance(node, ast.AsyncFunctionDef):
+                function_count += 1
+                async_used = 1
+
+            if isinstance(node, ast.ClassDef):
+                class_count += 1
+
+            if isinstance(node, ast.Try):
+                try_except = 1
+
+            for child in ast.iter_child_nodes(node):
+                walk(child, depth + 1)
+
+        walk(tree)
+
+        return {
+            "loop_count": loop_count,
+            "nest_depth": nest_depth,
+            "function_count": function_count,
+            "class_count": class_count,
+            "async_used": async_used,
+            "try_except": try_except,
+        }

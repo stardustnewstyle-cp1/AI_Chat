@@ -157,8 +157,12 @@ body {
     align-items: flex-start;
 }
 
+/* ★修正①：カードが bubble の 75% 制限を受けないようにする */
+.message.assistant .bubble {
+    max-width: 100%;
+}
+
 .bubble {
-    max-width: 75%;
     padding: 14px 18px;
     border-radius: 18px;
     white-space: pre-wrap;
@@ -180,12 +184,13 @@ body {
     border-bottom-left-radius: 6px;
 }
 
+/* ★修正②：followup の幅制限もカードに影響するので外す */
 .followup {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 8px;
-    max-width: 75%;
+    max-width: 100%;
 }
 
 .followup-btn {
@@ -246,9 +251,10 @@ button:disabled {
 }
 
 /* answer card */
+/* ★修正③：カード自身の幅制限を外す（既に正しい） */
 .answer-card {
     width: 100%;
-    max-width: 900px;
+    max-width: 100%;
     background: #ffffff;
     border: 1px solid #ddd;
     border-radius: 18px;

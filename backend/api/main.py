@@ -1,24 +1,33 @@
-#main.py
+# backend/api/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.pipelines.pipeline import Pipeline
 from backend.llm.llm import LLM
+from backend.llm.dummy_model_client import DummyModelClient   # ★ 追加：ローカルAI
+
 
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware(
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 )
 
+# ローカルAI
+model_client = DummyModelClient()
+llm = LLM(model_client=model_client)
+
+# ★ Pipeline に llm を渡す（最新版の正しい形）
 pipeline = Pipeline(
-    llm=LLM(),
-    external_api_key=""
+    llm=llm,
+    external_api_key=""   # 外部検索は使わない
 )
 
 class Query(BaseModel):
@@ -52,16 +61,12 @@ def build_response(raw: dict | None, mode: str) -> dict:
 async def ask(query: Query):
     text = query.text.strip()
 
-    # pipeline 実行
     raw = await pipeline.run(text) or {}
 
-    # 非技術質問なら mode = local
     if raw.get("title") == "非技術質問":
         return build_response(raw, "local")
 
-    # pipeline が外部検索を使ったかどうか
     used_external = raw.get("notes") is not None
-
     mode = "external" if used_external else "local"
 
     return build_response(raw, mode)

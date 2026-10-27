@@ -1,8 +1,9 @@
 # reasoning_layer.py
-class ReasoningLayer:
 
+import re
+
+class ReasoningLayer:
     def __init__(self):
-        # IntentDetector の domain を reasoning_type に変換するマップ
         self.DOMAIN_TO_REASONING = {
             "compare": "comparative",
             "design": "structural",
@@ -13,10 +14,10 @@ class ReasoningLayer:
             "example": "example",
             "specification": "factual",
             "systematize": "organizational",
-            "explain": "conceptual"
+            "explain": "conceptual",
+            "non_technical": "conceptual"
         }
 
-        # reasoning_type → Code Generator intent_type
         self.INTENT_MAP = {
             "structural": "design",
             "procedural": "design",
@@ -35,27 +36,23 @@ class ReasoningLayer:
             "design": "design"
         }
 
-    # ============================================================
-    # Pipeline から呼ぶ統合インターフェース
-    # ============================================================
-    def run(self, intent_info, api_info, features):
-        """
-        intent_info = IntentDetector.run() の返り値
-        {
-            "domain": ...,
-            "intent": ...,
-            "axes": ...,
-            "score": ...
-        }
-        """
+        self.COMPARE_KEYWORDS = [
+            "openai", "meta", "google", "anthropic",
+            "gpt", "llama", "gemini", "claude",
+            "diffusion", "stable diffusion", "sdxl",
+            "transformer",
+            "gpu", "cpu", "cuda", "nvidia", "amd"
+        ]
 
+    def run(self, intent_info, api_info, features):
         domain = intent_info["domain"]
         reasoning_type = self.map_domain_to_reasoning(domain)
         intent_type = self.select_code_intent(reasoning_type)
 
         code = self.generate_code(api_info, intent_type)
+        user_text = features.get("user_input", "")
 
-        return {
+        rv = {
             "domain": domain,
             "reasoning_type": reasoning_type,
             "intent_type": intent_type,
@@ -63,124 +60,130 @@ class ReasoningLayer:
             "features": features
         }
 
-    # ============================================================
-    # domain → reasoning_type
-    # ============================================================
+        # compare は特別処理
+        if domain == "compare":
+            targets = self.extract_targets(user_text.lower())
+            axes = self.extract_axes(targets)
+
+            rv["summary"] = self.build_summary(targets, axes)
+            rv["differences"] = self.build_differences(targets, axes)
+            rv["pros"] = self.build_pros(targets, axes)
+            rv["cons"] = self.build_cons(targets, axes)
+            rv["use_cases"] = self.build_use_cases(targets, axes)
+            rv["cautions"] = self.build_cautions(targets, axes)
+            return rv
+
+        # 汎用素材生成
+        base = user_text.strip() or "情報が不足しています。"
+
+        if domain == "explain":
+            rv["summary"] = base
+            rv["example"] = base     
+            rv["cautions"] = ["前提条件やバージョン差異に注意してください。"]
+
+        elif domain == "design":
+            rv["purpose"] = base
+            rv["requirements"] = [base]
+            rv["architecture"] = base
+            rv["flow"] = [base]
+            rv["cautions"] = ["設計変更の影響範囲に注意してください。"]
+
+        elif domain == "steps":
+            rv["steps"] = [base]
+            rv["notes"] = base
+            rv["cautions"] = ["前提条件を確認してください。"]
+
+        elif domain == "improvement":
+            rv["issues"] = [base]
+            rv["solutions"] = [base]
+            rv["design_change"] = base
+            rv["effect_check"] = [base]
+            rv["cautions"] = ["仕様変更の影響範囲を確認してください。"]
+
+        elif domain == "summary":
+            rv["summary"] = base
+            rv["conclusion"] = base
+
+        elif domain == "example":
+            rv["example"] = base
+            rv["notes"] = base
+
+        elif domain == "specification":
+            rv["requirements"] = [base]
+            rv["constraints"] = [base]
+            rv["rules"] = [base]
+
+        elif domain == "systematize":
+            rv["summary"] = base
+            rv["use_cases"] = [base]
+            rv["cautions"] = ["適用範囲を確認してください。"]
+
+        return rv
+
+    # compare 専用ロジック
+    def extract_targets(self, text):
+        found = [kw for kw in self.COMPARE_KEYWORDS if kw in text]
+        return found[:2] if len(found) >= 2 else found
+
+    def extract_axes(self, targets):
+        axes = []
+        if any(t in targets for t in ["gpu", "cpu", "cuda", "nvidia", "amd"]):
+            axes += ["速度", "最適化", "メモリ効率", "安定性"]
+        if any(t in targets for t in ["diffusion", "stable diffusion", "sdxl"]):
+            axes += ["画像生成品質", "計算コスト", "モデル構造"]
+        if any(t in targets for t in ["transformer", "gpt", "llama", "claude"]):
+            axes += ["言語処理性能", "推論速度", "モデル構造"]
+        if "openai" in targets or "meta" in targets:
+            axes += ["最適化方針", "GPU効率", "環境依存性"]
+        return list(set(axes))
+
+    def build_summary(self, targets, axes):
+        if len(targets) < 2:
+            return "比較対象が十分に抽出できませんでした。"
+        return f"{targets[0]} と {targets[1]} の比較概要です（軸: {', '.join(axes)}）。"
+
+    def build_differences(self, targets, axes):
+        if len(targets) < 2:
+            return []
+        t1, t2 = targets[0], targets[1]
+        return [f"{t1} と {t2} は {axis} の設計方針が異なる" for axis in axes]
+
+    def build_pros(self, targets, axes):
+        if len(targets) < 2:
+            return []
+        t1 = targets[0]
+        return [f"{t1} は {axis} に強みがある可能性がある" for axis in axes]
+
+    def build_cons(self, targets, axes):
+        if len(targets) < 2:
+            return []
+        t2 = targets[1]
+        return [f"{t2} は {axis} に課題が残る可能性がある" for axis in axes]
+
+    def build_use_cases(self, targets, axes):
+        if len(targets) < 2:
+            return []
+        t1, t2 = targets[0], targets[1]
+        return [
+            msg
+            for axis in axes
+            for msg in (
+                f"{axis} を重視するなら {t1}",
+                f"{axis} の最適化を優先するなら {t2}"
+            )
+        ]
+
+    def build_cautions(self, targets, axes):
+        return [
+            f"{axis} は環境差によって結果が変動する可能性がある"
+            for axis in axes
+        ]
+
     def map_domain_to_reasoning(self, domain):
         return self.DOMAIN_TO_REASONING.get(domain, "conceptual")
 
-    # ============================================================
-    # reasoning_type → Code Generator intent_type
-    # ============================================================
     def select_code_intent(self, reasoning_type):
         return self.INTENT_MAP.get(reasoning_type, "design")
 
-    # ============================================================
-    # Code Generator（既存ロジック）
-    # ============================================================
     def generate_code(self, api_info, intent_type):
-
-        if intent_type == "design":
-            return self.generate_design_code(api_info)
-        if intent_type == "debug":
-            return self.generate_debug_code(api_info)
-        if intent_type == "improve":
-            return self.generate_improve_code(api_info)
-        if intent_type == "compare":
-            return self.generate_compare_code(api_info)
-        if intent_type == "optimize":
-            return self.generate_optimize_code(api_info)
-
-        return "# intent_type が不明です"
-
-    # -------------------------
-    # design: 基本コード生成
-    # -------------------------
-    def generate_design_code(self, api):
-        name = api["api"]["name"]
-        params = api["api"]["params"]
-        usage = api["usage"]["examples"]
-        notes = api["notes"]["important"]
-
-        code = []
-        code.append("# 基本的な使い方")
-        code.append(f"# API: {name}")
-
-        for u in usage[:2]:
-            code.append(f"# {u}")
-
-        for n in notes[:2]:
-            code.append(f"# 注意: {n}")
-
-        code.append(f"{name}({', '.join(params)})")
-        return "\n".join(code)
-
-    # -------------------------
-    # debug: 例外処理付きコード
-    # -------------------------
-    def generate_debug_code(self, api):
-        name = api["api"]["name"]
-        params = api["api"]["params"]
-        exceptions = api["api"]["exceptions"]
-
-        code = []
-        code.append("# 例外処理付きコード")
-        code.append("try:")
-        code.append(f"    result = {name}({', '.join(params)})")
-
-        for e in exceptions[:2]:
-            code.append(f"except {e}:")
-            code.append(f"    print('Error occurred: {e}')")
-
-        return "\n".join(code)
-
-    # -------------------------
-    # improve: 改善コード
-    # -------------------------
-    def generate_improve_code(self, api):
-        name = api["api"]["name"]
-        params = api["api"]["params"]
-        perf = api["notes"]["performance"]
-
-        code = []
-        code.append("# 改善版コード")
-
-        for p in perf[:2]:
-            code.append(f"# 性能改善ポイント: {p}")
-
-        code.append(f"{name}({', '.join(params)})")
-        return "\n".join(code)
-
-    # -------------------------
-    # compare: 比較コード
-    # -------------------------
-    def generate_compare_code(self, api):
-        name = api["api"]["name"]
-        params = api["api"]["params"]
-        usage = api["usage"]["examples"]
-
-        code = []
-        code.append("# API比較コード")
-
-        for u in usage[:2]:
-            code.append(f"# 使用例: {u}")
-
-        code.append(f"# パラメータ: {params}")
-        return "\n".join(code)
-
-    # -------------------------
-    # optimize: 性能最適化コード
-    # -------------------------
-    def generate_optimize_code(self, api):
-        name = api["api"]["name"]
-        params = api["api"]["params"]
-        perf = api["notes"]["performance"]
-
-        code = []
-        code.append("# 性能最適化コード")
-
-        for p in perf[:2]:
-            code.append(f"# 性能注意点: {p}")
-
-        code.append(f"{name}({', '.join(params)})")
-        return "\n".join(code)
+        return "# code generation placeholder"
