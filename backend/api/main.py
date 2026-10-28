@@ -6,21 +6,21 @@ from pydantic import BaseModel
 
 from backend.pipelines.pipeline import Pipeline
 from backend.llm.llm import LLM
-from backend.llm.dummy_model_client import DummyModelClient   
+from backend.llm.dummy_model_client import DummyModelClient
 
 
 app = FastAPI()
 
+
 app.add_middleware(
-    CORSMiddleware(
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ローカルAI
+# ★ ローカルAI
 model_client = DummyModelClient()
 llm = LLM(model_client=model_client)
 

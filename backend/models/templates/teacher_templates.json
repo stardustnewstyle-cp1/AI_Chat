@@ -1,7 +1,6 @@
 {
   "explain": ["summary", "example", "caution"],
   "design": ["purpose", "requirements", "architecture", "flow", "caution"],
-  "compare": ["differences", "use_cases", "caution"],
   "steps": ["steps", "notes", "caution"],
   "improvement": [
     "issues",
