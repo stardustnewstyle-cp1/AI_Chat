@@ -1,4 +1,3 @@
-#level_detector.py
 class LevelDetector:
     """
     軽量ルールベースのレベル判定。
@@ -10,7 +9,6 @@ class LevelDetector:
     # 文章特徴量（AIモデル語彙を含む）
     # -------------------------
     def calc_term_density(self, text: str) -> float:
-        # AIモデル系語彙を追加（IntentDetector と整合）
         terms = [
             "AI", "モデル", "学習", "推論", "GPU", "Transformer",
             "GPT", "Llama", "Diffusion", "Stable Diffusion", "SDXL",
@@ -31,12 +29,13 @@ class LevelDetector:
     # レベル判定（Pipeline が使う）
     # -------------------------
     def detect(self, features: dict) -> str:
-        """
-        FeatureExtractor の出力と ReasoningLayer の domain を使って
-        初級 / 中級 / 上級 を判定する。
-        """
+        domain = features.get("domain")
 
-        # --- コード特徴量（既存） ---
+        # ★ 締め切り対応：compare は必ず中級にする
+        if domain == "compare":
+            return "中級"
+
+        # --- コード特徴量 ---
         loop_count = features.get("loop_count", 0)
         nest_depth = features.get("nest_depth", 0)
         function_count = features.get("function_count", 0)
@@ -44,37 +43,26 @@ class LevelDetector:
         async_used = features.get("async_used", 0)
         try_except = features.get("try_except", 0)
 
-        # --- 文章特徴量（FeatureExtractor と整合） ---
+        # --- 文章特徴量 ---
         score = (
             features.get("tech_terms", 0) +
             features.get("connectives", 0) +
             features.get("causal_links", 0)
         )
 
-        # --- domain に応じた補正（ReasoningLayer と整合） ---
-        domain = features.get("domain")
-
-        # compare は文章の深さが高くなるので補正
-        if domain == "compare":
-            score += 2
-
-        # design は構造化された説明が多いので補正
+        # --- domain 補正 ---
         if domain == "design":
             score += 1
-
-        # caution は専門語彙が増えるので補正
         if domain == "caution":
             score += 1
+        if domain == "steps":
+            score += 1  # 手順系は文章構造が複雑になりやすい
 
-        # -------------------------
-        # レベル判定ロジック
-        # -------------------------
-
-        # 上級（構造化されたコード or 高い文章スコア）
+        # --- 上級 ---
         if class_count >= 2 or nest_depth >= 3 or score >= 8:
             return "上級"
 
-        # 中級（少し複雑）
+        # --- 中級 ---
         if (
             nest_depth >= 2 or
             async_used == 1 or
@@ -84,5 +72,4 @@ class LevelDetector:
         ):
             return "中級"
 
-        # 初級（簡単）
         return "初級"

@@ -1,4 +1,4 @@
-#pipeline.py
+# backend/pipeline.py
 from backend.intent_layer.intent_detector import IntentDetector
 from backend.reasoning_layer.reasoning_layer import ReasoningLayer
 from backend.teacher_layer.teacher_layer import TeacherLayer
@@ -10,97 +10,60 @@ from backend.llm.llm import LLM
 class Pipeline:
     """
     技術質問専用パイプライン
-
-    IntentDetector
-        ↓
-    ReasoningLayer
-        ↓
-    FeatureExtractor / LevelDetector
-        ↓
-    LLM
-        ↓
-    TeacherLayer
-        ↓
-    UI
+    Intent → Reasoning → Feature/Level → LLM → TeacherLayer → UI
     """
 
     def __init__(self, llm: LLM, external_api_key: str = ""):
         self.llm = llm
-
+        self.external_api_key = external_api_key
         self.intent_detector = IntentDetector()
         self.reasoning_layer = ReasoningLayer()
         self.teacher_layer = TeacherLayer()
-
         self.extractor = FeatureExtractor()
         self.level_detector = LevelDetector()
 
     def _is_technical_question(self, text: str) -> bool:
-
         lower = text.lower()
-
-        technical_keywords = [
-            "python", "javascript", "typescript", "java", "go", "rust",
-            "class", "クラス", "api", "設計", "implementation", "実装",
-            "code", "コード", "function", "関数", "error", "エラー",
-            "bug", "バグ", "fix", "修正", "refactor", "リファクタ",
-            "architecture", "アーキテクチャ", "改善", "最適化", "高速化",
-            "効率化", "backend", "frontend", "database", "db", "sql",
-            "docker", "kubernetes", "system design", "プロジェクト",
-            "this code", "this file", "this repository", "this function",
-            "this api", "非同期", "同期", "処理", "実行", "ログ",
-            "cache", "redis", "mysql", "postgres", "flask", "fastapi",
-            "django", "react", "vue", "node", "next", "http", "https",
-            "gpt", "llama", "gemini", "claude", "transformer", "attention",
-            "aiモデル", "モデル", "推論", "inference", "gpu", "cuda",
-            "nvidia", "amd", "latency", "throughput",
+        keywords = [
+            "python", "class", "クラス", "function", "関数",
+            "error", "エラー", "設計", "architecture",
+            "コード", "実装", "api", "backend", "frontend",
         ]
+        return any(k in lower for k in keywords)
 
-        return any(keyword in lower for keyword in technical_keywords)
+    def _normalize_domain(self, domain: str, intent: str) -> str:
+        mapping = {"procedural": "steps", "procedure": "steps"}
+        base = mapping.get(domain, domain)
+        if base in ("", None):
+            return {
+                "steps": "steps",
+                "compare": "compare",
+                "summary": "summary",
+                "improvement": "improvement",
+                "design": "design",
+            }.get(intent, "summary")
+        return base
 
-    def _normalize_domain(self, domain: str) -> str:
-
-        mapping = {
-            "procedural": "steps",
-            "procedure": "steps",
-        }
-
-        return mapping.get(domain, domain)
-
-    def _build_response_vector(
-        self,
-        text: str,
-        domain: str,
-        intent: str,
-        reasoning_type: str,
-        level: str,
-        axes: dict,
-        score: float,
-    ) -> dict:
-
+    def _build_response_vector(self, text, domain, intent, reasoning_type, level, axes, score):
         text_clean = text.strip()
 
-        if domain == "structural":
-
-            purpose = "技術や言語仕様の内部構造や挙動の違いを理解する"
-            architecture = "構造差分 → コンパイラ/ランタイム → 実行時挙動"
-            flow = ["構造の違いを把握", "内部処理を確認", "実行時影響を整理"]
-            cautions = ["古い仕様との差異に注意", "実装依存の挙動に注意"]
-
-        elif intent == "steps":
-
+        if domain == "steps":
             purpose = "手順を理解し実装できるようになる"
             architecture = "準備 → 実装 → 動作確認"
             flow = ["前提知識を確認", "コードを書く", "実行して確認"]
             cautions = ["コードの意味を理解する", "エラー内容を確認する"]
 
-        else:
+        elif domain == "design":
+            purpose = "設計意図を理解し、構造を整理する"
+            architecture = "責務分離 → 拡張性 → 保守性"
+            flow = ["目的整理", "構造化", "改善点の抽出"]
+            cautions = ["過剰設計を避ける", "依存関係に注意"]
 
+        else:
             purpose = "質問の意図を把握して要点を整理する"
             architecture = "背景 → 要点 → 注意点"
             flow = ["本質把握", "背景整理", "簡潔に説明"]
             cautions = ["前提違いによる誤解", "専門用語の多用"]
-
-        purpose = f"{purpose}（質問: {text_clean}）"
 
         return {
             "domain": domain,
@@ -110,14 +73,13 @@ class Pipeline:
             "axes": axes,
             "score": score,
             "title": "回答",
-            "purpose": purpose,
+            "purpose": f"{purpose}（質問: {text_clean}）",
             "architecture": architecture,
             "flow": flow,
             "cautions": cautions,
         }
 
     async def run(self, text: str) -> dict:
-
         text = text.strip()
 
         if not text:
@@ -137,25 +99,28 @@ class Pipeline:
             }
 
         intent_result = self.intent_detector.detect(text)
-
-        domain = self._normalize_domain(intent_result.get("domain", "explain"))
         intent = intent_result.get("intent", "explain")
+        raw_domain = intent_result.get("domain", "summary")
         axes = intent_result.get("axes", {})
         score = intent_result.get("score", 0.0)
+
+        domain = self._normalize_domain(raw_domain, intent)
 
         reasoning_vector_rl = self.reasoning_layer.run(
             intent_result,
             {"api": {"name": "dummy", "params": []}},
             {"user_input": text},
         )
-
         reasoning_type = reasoning_vector_rl.get("reasoning_type", "conceptual")
 
         features = self.extractor.extract(text)
+
+        # ★★★ 最重要修正：LevelDetector に domain を渡す ★★★
+        features["domain"] = domain
+
         level = self.level_detector.detect(features)
 
         reasoning_vector = reasoning_vector_rl.copy()
-
         reasoning_vector.update(
             self._build_response_vector(
                 text=text,
@@ -168,67 +133,68 @@ class Pipeline:
             )
         )
 
-        external_context = None
-
         llm_text = self.llm.generate(text, intent=intent, level=level)
 
         # ---------------------------------------------------------
-        # LLM応答を TeacherLayer が期待する形式へ変換
+        # ★ LLM応答を TeacherLayer が期待する形式へ変換
         # ---------------------------------------------------------
-        if domain == "improvement":
-            reasoning_vector.update({
-                "issues": [llm_text],
-                "solutions": [llm_text],
-                "design_change": llm_text,
-                "effect_check": [llm_text],
-            })
 
-        elif domain == "design":
-            reasoning_vector.update({
-                "purpose": llm_text,
-                "architecture": llm_text,
-                "flow": [llm_text],
-            })
+        if domain == "compare":
+            pass
 
         elif domain == "steps":
             reasoning_vector.update({
                 "summary": llm_text,
-                "example": llm_text,
+                "example": "",
+                "notes": "",
+            })
+
+        elif domain == "design":
+            reasoning_vector.update({
+                "summary": llm_text,
+                "purpose": reasoning_vector.get("purpose", ""),
+                "architecture": reasoning_vector.get("architecture", ""),
+                "flow": reasoning_vector.get("flow", []),
+                "cautions": reasoning_vector.get("cautions", []),
+                "anti_patterns": reasoning_vector.get("anti_patterns", []),
+                "example": "",
+                "notes": "",
+            })
+
+        elif domain == "improvement":
+            reasoning_vector.update({
+                "summary": llm_text,
+                "issues": [llm_text],
+                "solutions": [llm_text],
+                "effect_check": [llm_text],
+                "design_change": llm_text,
+                "example": "",
+                "notes": "",
             })
 
         elif domain == "summary":
             reasoning_vector.update({
                 "summary": llm_text,
                 "conclusion": llm_text,
+                "example": "",
+                "notes": "",
             })
-
-        elif domain == "example":
-            reasoning_vector.update({
-                "example": llm_text,
-                "notes": llm_text,
-            })
-
-        elif domain == "compare":
-            # compare は ReasoningLayer が生成するので触らない
-            pass
 
         else:
             reasoning_vector.update({
                 "summary": llm_text,
-                "example": llm_text,
+                "example": "",
+                "notes": "",
             })
 
-        # ---------------------------------------------------------
-        # デバッグログ
-        # ---------------------------------------------------------
-        print("\n===== TEACHER INPUT =====")
+        # ★★★ TeacherLayer に渡す直前の中身を全部出す（デバッグ）★★★
+        print("\n[DEBUG] reasoning_vector passed to TeacherLayer:")
         for k, v in reasoning_vector.items():
-            print(f"{k}: {v}")
-        print("=========================\n")
+            print(f"  {k}: {repr(v)}")
 
         teacher_output = self.teacher_layer.run(
             reasoning_vector,
-            external_context=external_context,
+            external_context=None,
         )
 
         return {

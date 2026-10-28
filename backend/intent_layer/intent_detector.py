@@ -1,3 +1,5 @@
+# ★★★ IntentDetector 完全修正版 ★★★
+
 class IntentDetector:
     """
     技術質問の意図判定（domain / intent / axes）
@@ -6,30 +8,17 @@ class IntentDetector:
     def __init__(self):
 
         self.tech_keywords = [
-            "python", "javascript", "typescript", "java", "go", "rust",
+            "python", "fastapi", "flask", "django",
             "class", "クラス", "api", "設計", "implementation", "実装",
             "code", "コード", "function", "関数", "error", "エラー",
-            "bug", "バグ", "fix", "修正", "refactor", "リファクタ",
-            "architecture", "アーキテクチャ",
-            "改善", "最適化", "高速化", "効率化",
-            "backend", "frontend", "database", "db", "sql",
+            "backend", "frontend", "database", "sql",
             "docker", "kubernetes",
-            "system design", "プロジェクト",
-            "非同期", "同期", "処理", "実行", "ログ",
-            "cache", "redis", "mysql", "postgres",
-            "flask", "fastapi", "django",
-            "react", "vue", "node", "next",
-            "http", "https",
-            "gpt", "llama", "gemini", "claude",
-            "diffusion", "stable diffusion", "sdxl",
-            "transformer", "attention",
-            "aiモデル", "モデル", "推論", "inference",
-            "gpu", "cuda", "nvidia", "amd",
-            "latency", "throughput"
+            "非同期", "同期",
+            "認証", "ログイン", "jwt", "oauth",
         ]
 
         self.compare_keywords = [
-            "違い", "比較", "どっち", "vs", "比べる",
+            "違い", "比較", "どっち", "vs", "比べる", "差分",
             "openai", "meta", "google", "anthropic"
         ]
 
@@ -62,9 +51,17 @@ class IntentDetector:
                 "score": 0.1
             }
 
-        # steps
-        if "手順" in lower or "やり方" in lower or "方法" in lower:
-            return {"domain": "steps", "intent": "steps", "axes": {}, "score": 0.7}
+        # ★★★ steps 判定を強化（ここが最重要）★★★
+        if any(k in lower for k in [
+            "手順", "やり方", "方法", "追加する", "導入する", "設定する",
+            "インストール", "構築", "作る", "実装する"
+        ]):
+            return {
+                "domain": "steps",
+                "intent": "steps",
+                "axes": {},
+                "score": 0.9
+            }
 
         # caution
         if "注意" in lower or "危険" in lower or "リスク" in lower:
@@ -74,25 +71,7 @@ class IntentDetector:
         if "改善" in lower or "最適化" in lower:
             return {"domain": "improvement", "intent": "improve", "axes": {}, "score": 0.8}
 
-        # ★ Python クラスは explain
-        if "python" in lower and ("class" in lower or "クラス" in lower):
-            return {
-                "domain": "explain",
-                "intent": "explain",
-                "axes": {},
-                "score": 0.8
-            }
-
-        # ★ 「仕組み」「とは」「概要」は explain
-        if "仕組み" in lower or "とは" in lower or "概要" in lower:
-            return {
-                "domain": "explain",
-                "intent": "explain",
-                "axes": {},
-                "score": 0.75
-            }
-
-        # ★ 設計系
+        # 設計系
         if "設計" in lower or "architecture" in lower or "アーキテクチャ" in lower:
             return {
                 "domain": "design",
@@ -101,10 +80,10 @@ class IntentDetector:
                 "score": 0.8
             }
 
-        
+        # fallback → design
         return {
-            "domain": "structural",
-            "intent": "structural",
+            "domain": "design",
+            "intent": "design",
             "axes": {},
             "score": 0.6
         }

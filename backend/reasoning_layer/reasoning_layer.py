@@ -1,6 +1,4 @@
-#reasoning_layer.py
 import re
-
 
 class ReasoningLayer:
 
@@ -38,7 +36,10 @@ class ReasoningLayer:
             "design": "design",
         }
 
+        # ★ 同期 / 非同期 を比較対象に追加
         self.COMPARE_KEYWORDS = [
+            "同期",
+            "非同期",
             "openai",
             "meta",
             "google",
@@ -229,17 +230,50 @@ class ReasoningLayer:
 
     def extract_targets(self, text):
 
+        # 1. 同期 / 非同期 が両方ある場合はそれを優先
+        if "同期" in text and "非同期" in text:
+            return ["同期", "非同期"]
+
+        # 2. 既存の COMPARE_KEYWORDS から抽出
         found = [
             kw
             for kw in self.COMPARE_KEYWORDS
             if kw in text
         ]
+        if len(found) >= 2:
+            return found[:2]
 
-        return found[:2] if len(found) >= 2 else found
+        # 3. 名詞抽出は比較に使う語だけに限定
+        allowed_terms = [
+            "同期",
+            "非同期",
+            "rest",
+            "graphql",
+            "fastapi",
+            "flask",
+        ]
+
+        words = re.findall(r"[a-zA-Z0-9一-龥ぁ-んァ-ン]+", text)
+        tech_terms = [
+            w for w in words
+            if w.lower() in allowed_terms
+        ]
+
+        return tech_terms[:2]
 
     def extract_axes(self, targets):
 
         axes = []
+
+        # API 設計における同期 / 非同期の比較軸
+        if "同期" in targets or "非同期" in targets:
+            axes += [
+                "応答速度",
+                "スループット",
+                "整合性",
+                "エラー処理",
+                "実装の複雑さ",
+            ]
 
         if any(
             t in targets
@@ -306,13 +340,12 @@ class ReasoningLayer:
     ):
 
         if len(targets) < 2:
-            return "比較対象が十分に抽出できませんでした。"
+            return "比較対象が十分に抽出できませんでしたが、一般的な違いを説明します。"
 
-        return (
-            f"{targets[0]} と "
-            f"{targets[1]} の比較概要です"
-            f"（軸: {', '.join(axes)}）"
-        )
+        base = f"{targets[0]} と {targets[1]} の比較概要です"
+        if axes:
+            return base + f"（軸: {', '.join(axes)}）"
+        return base
 
     def build_differences(
         self,
@@ -320,7 +353,7 @@ class ReasoningLayer:
         axes,
     ):
 
-        if len(targets) < 2:
+        if len(targets) < 2 or not axes:
             return []
 
         t1, t2 = targets[0], targets[1]
@@ -336,7 +369,7 @@ class ReasoningLayer:
         axes,
     ):
 
-        if len(targets) < 2:
+        if len(targets) < 2 or not axes:
             return []
 
         t1 = targets[0]
@@ -352,7 +385,7 @@ class ReasoningLayer:
         axes,
     ):
 
-        if len(targets) < 2:
+        if len(targets) < 2 or not axes:
             return []
 
         t2 = targets[1]
@@ -368,7 +401,7 @@ class ReasoningLayer:
         axes,
     ):
 
-        if len(targets) < 2:
+        if len(targets) < 2 or not axes:
             return []
 
         t1, t2 = targets[0], targets[1]
@@ -387,6 +420,9 @@ class ReasoningLayer:
         targets,
         axes,
     ):
+
+        if not axes:
+            return []
 
         return [
             f"{axis} は環境差によって結果が変動する可能性がある"

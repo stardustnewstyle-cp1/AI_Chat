@@ -1,4 +1,3 @@
-#teacher_layer.py
 import json
 import os
 
@@ -108,9 +107,11 @@ class TeacherLayer:
         external_context=None,
     ) -> dict:
 
+        # ★★★ デバッグ追加（ここが最重要）★★★
         domain = reasoning_vector.get("domain", "design")
-
         sections = self.templates.get(domain)
+        print(f"\n[DEBUG] TeacherLayer.build_structure domain = {domain}")
+        print(f"[DEBUG] TeacherLayer template sections = {sections}")
 
         if not sections:
             sections = self._default_sections_for_domain(domain)
@@ -170,107 +171,132 @@ class TeacherLayer:
         # ---------------------------------
 
         if kind == "summary":
+            summary = rv.get("summary", "")
+            if not summary:
+                return None
             return {
                 "header": "概要",
-                "content": rv.get("summary", ""),
+                "content": summary,
             }
 
         if kind == "steps":
-
             steps = rv.get("steps", [])
-
             if steps:
                 return {
                     "header": "手順",
                     "steps": steps,
                 }
-
-            return {
-                "header": "手順",
-                "content": rv.get("summary", ""),
-            }
+            return None
 
         if kind == "differences":
+            diffs = rv.get("differences", [])
+            if not diffs:
+                return None
             return {
                 "header": "違い",
-                "list": rv.get("differences", []),
+                "list": diffs,
             }
 
         if kind == "pros_cons":
+            pros = rv.get("pros", [])
+            cons = rv.get("cons", [])
+            if not pros and not cons:
+                return None
             return {
                 "header": "メリット・デメリット",
-                "pros": rv.get("pros", []),
-                "cons": rv.get("cons", []),
+                "pros": pros,
+                "cons": cons,
             }
 
         if kind == "architecture":
+            arch = rv.get("architecture", "")
+            if not arch:
+                return None
             return {
                 "header": "構造",
-                "content": rv.get("architecture", ""),
+                "content": arch,
             }
 
         if kind == "use_cases":
+            uc = rv.get("use_cases", [])
+            if not uc:
+                return None
             return {
                 "header": "使いどころ",
-                "list": rv.get("use_cases", []),
+                "list": uc,
             }
 
         if kind == "example":
+            example = rv.get("example", "")
+            if not example:
+                return None
             return {
                 "header": "例",
-                "code": rv.get("example", ""),
+                "code": example,
             }
 
         if kind == "caution":
+            cautions = rv.get("cautions", [])
+            if not cautions:
+                return None
             return {
                 "header": "注意点",
-                "list": rv.get("cautions", []),
+                "list": cautions,
             }
 
         if kind == "purpose":
+            purpose = rv.get("purpose", "")
+            if not purpose:
+                return None
             return {
                 "header": "目的",
-                "content": rv.get("purpose", ""),
+                "content": purpose,
             }
 
         if kind == "flow":
+            flow = rv.get("flow", [])
+            if not flow:
+                return None
             return {
                 "header": "流れ",
-                "steps": rv.get("flow", []),
+                "steps": flow,
             }
 
         if kind == "conclusion":
+            conc = rv.get("conclusion", "")
+            if not conc:
+                return None
             return {
                 "header": "結論",
-                "content": rv.get("conclusion", ""),
+                "content": conc,
             }
 
         if kind == "notes":
-
             notes = rv.get("notes", "")
-
-            if external_list:
-                return {
-                    "header": "補足",
-                    "content": notes,
-                    "list": external_list,
-                }
-
+            if not notes and not external_list:
+                return None
             return {
                 "header": "補足",
                 "content": notes,
+                "list": external_list,
             }
 
         if kind == "anti_patterns":
+            ap = rv.get("anti_patterns", [])
+            if not ap:
+                return None
             return {
                 "header": "アンチパターン",
-                "list": rv.get("anti_patterns", []),
+                "list": ap,
             }
 
         if kind == "requirements":
+            req = rv.get("requirements", [])
+            if not req:
+                return None
             return {
                 "header": "要件",
-                "list": rv.get("requirements", []),
+                "list": req,
             }
 
         # ---------------------------------
@@ -278,37 +304,42 @@ class TeacherLayer:
         # ---------------------------------
 
         if kind == "issues":
+            issues = rv.get("issues", [])
+            if not issues:
+                return None
             return {
                 "header": "課題",
-                "list": rv.get("issues", []),
+                "list": issues,
             }
 
         if kind == "solutions":
+            sol = rv.get("solutions", [])
+            if not sol:
+                return None
             return {
                 "header": "改善方針",
-                "list": rv.get("solutions", []),
+                "list": sol,
             }
 
         if kind == "design_change":
+            dc = rv.get("design_change", "")
+            if not dc:
+                return None
             return {
                 "header": "設計変更",
-                "content": rv.get("design_change", ""),
+                "content": dc,
             }
 
         if kind == "effect_check":
+            ec = rv.get("effect_check", [])
+            if not ec:
+                return None
             return {
                 "header": "効果検証",
-                "list": rv.get("effect_check", []),
+                "list": ec,
             }
 
-        # ---------------------------------
-        # 未実装
-        # ---------------------------------
-
-        return {
-            "header": kind,
-            "content": f"[未実装セクション: {kind}]",
-        }
+        return None
 
     def run(
         self,

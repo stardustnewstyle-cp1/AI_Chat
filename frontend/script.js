@@ -22,7 +22,7 @@ function hideTutorial() {
 }
 
 /* -----------------------------
- * メッセージ描画（ユーザー・AI）
+ * メッセージ描画（ユーザー）
  * ----------------------------- */
 function appendMessage(role, text) {
     hideTutorial();
@@ -142,7 +142,7 @@ function renderSection(section) {
 }
 
 /* -----------------------------
- * ★ カード描画（ここが今回の修正ポイント）
+ * ★ カード描画（TeacherLayer のみ）
  * ----------------------------- */
 function renderAnswerCard(data) {
     const result = document.getElementById("result");
@@ -266,7 +266,7 @@ async function send() {
 
         if (data.mode === "external") {
             appendFollowUp(
-                "外部情報が必要です。内部検索で補足します。",
+                "外部情報が必要です。内部検索で補助します。",
                 [
                     {
                         label: "続ける",
@@ -291,7 +291,9 @@ async function send() {
             return;
         }
 
+        /* ★ 修正：appendMessage を削除して TeacherLayer のカードのみ描画 */
         renderAnswerCard(data);
+
         appendFollowUp("必要なら次のどれかを選んでください。", defaultFollowUps());
 
     } catch (error) {
