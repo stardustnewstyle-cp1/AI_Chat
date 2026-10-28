@@ -73,7 +73,7 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 - summary / list / steps / pros_cons / caution などの構造化カード生成  
 - 非技術質問の自動フィルタリング  
 - FastAPI によるバックエンド API  
-- Copilot 風 UI によるカード表示  
+- UI によるカード表示  
 
 ---
 
@@ -124,10 +124,6 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 - 推論構造①（design）.png  
 - 推論構造②（compare）.png  
 - 推論構造③（procedure）.png  
-
-### ⑤ 構造化カード（TeacherLayer）  
-※ compare / design / steps の構造化カードはコードベースで動作確認済  
-（スクショ未収録）
 
 ---
 
