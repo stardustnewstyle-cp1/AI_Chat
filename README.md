@@ -1,48 +1,89 @@
-# ※ 本 README は成果物の説明を目的としており、Python の学習成果は別紙「学習まとめ.txt」に記載している。
+--- 
+※ 本 README は成果物の説明を目的としており、Python の学習成果は別紙「学習まとめ.txt」に記載している。
 
-# 1. アプリ名  
+---
+
+## 1. アプリ名  
 技術質問多層解析 AI アシスタント
 
-# 2. このアプリを作った目的  
-本アプリは、Python による **多層 AI システム構築の理解定着**を目的とした自己研鑽の一環として開発した。  
-Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー・LLM 連携など、  
-実務レベルの AI アーキテクチャを自作することで、  
-**技術質問に体系的に回答できる AI を自力で構築する経験を得ること**を目的としている。
+---
 
-そのうえで、アプリとして以下の価値を提供する。
+## 2. このアプリを作った目的  
+本アプリは、Python による **多層 AI システム構築の理解定着**を目的とした自己研鑽の一環として開発した。
+
+Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー・LLM 連携など、  
+実務レベルの AI アーキテクチャを **AI と協働しながら一部を自力で実装する**ことで、  
+技術質問に体系的に回答できる仕組みを理解することを目的としている。
+
+アプリとして以下の価値を提供する：
 
 - 技術質問に対して体系化された回答を返す  
 - 質問の意図（Intent）を自動判定し、最適な推論構造を生成する  
-- 質問者のレベル（初級〜上級）を推定し、適切な深さで回答する  
-- Copilot 風 UI により、読みやすいカード形式で回答を提示する  
+- 質問者のレベル（初級・中級・上級）を推定し、適切な深さで回答する  
 
-# 3. アプリの概要  
-本アプリは、ユーザが入力した技術質問を多層構造で解析し、  
-**Intent 判定 → 推論構造生成 → 特徴量抽出 → レベル判定 → 教師レイヤー → LLM → カード表示**  
-という流れで技術的に体系化された回答を返す。
+---
 
-- IntentDetector による質問意図の分類  
-- ReasoningLayer による推論テンプレート選択  
-- ML による特徴量抽出とレベル推定  
-- TeacherLayer による回答構造生成  
-- LLM による最終文章生成  
-- Copilot 風 UI によるカード表示  
+## 3. アプリの概要  
+本アプリは、ユーザが入力した技術質問を多層構造で解析し、
 
-# 4. 機能  
-- 技術質問の Intent（比較・設計・手順・改善・要約など）自動判定  
-- 推論テンプレートに基づく体系的な回答生成  
+**Intent 判定 → 推論構造生成 → 特徴量抽出 → レベル判定 → 教師レイヤー → LLM → カード表示**
+
+という流れで体系化された技術回答を返す。
+
+### ● 各レイヤーの役割  
+- **IntentDetector**  
+  - 質問文から Intent（compare / design / steps / caution / improvement / summary）を判定  
+  - 「仕組み」「とは」「教えて」などは design  
+  - 「手順」「方法」「追加する」などは steps  
+  - 「比較」「vs」などは compare  
+
+- **ReasoningLayer**  
+  - Intent に応じた推論テンプレート（比較・設計・手順など）を生成  
+  - 推論構造①（design）  
+  - 推論構造②（compare）  
+  - 推論構造③（procedure）  
+
+- **FeatureExtractor**  
+  - 文構造・接続詞・因果関係・技術語彙などを抽出  
+
+- **LevelDetector**  
+  - FeatureExtractor の特徴量＋ domain 補正により  
+    **初級 / 中級 / 上級** を判定  
+  - compare → 中級  
+  - design → 中級  
+  - steps → 中級  
+
+- **TeacherLayer**  
+  - 推論テンプレートに基づき  
+    summary / differences / pros_cons / use_cases / caution / flow / architecture  
+    などの構造化カードを生成  
+
+- **LLM**  
+  - TeacherLayer が生成した構造に沿って文章を生成  
+
+- **UI**  
+  - Copilot 風のカード形式で回答を表示  
+
+---
+
+## 4. 機能  
+- Intent（比較・設計・手順・改善・要約）自動判定  
+- 推論テンプレートに基づく体系化された回答生成  
 - 特徴量抽出による質問者レベル推定（初級・中級・上級）  
-- header / content / list / steps / code などの構造化された回答生成  
+- summary / list / steps / pros_cons / caution などの構造化カード生成  
 - 非技術質問の自動フィルタリング  
-- Copilot 風 UI によるカード表示  
 - FastAPI によるバックエンド API  
+- Copilot 風 UI によるカード表示  
 
-# 5. データ処理の流れ  
+---
 
-## ● 入力データ  
+## 5. データ処理の流れ  
+
+### ● 入力データ  
 - ユーザの質問文（text）
 
-## ● 内部データ構造（統一フォーマット）  
+### ● 内部データ構造（統一フォーマット）  
+- domain  
 - intent  
 - reasoning_type  
 - level  
@@ -50,53 +91,77 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 - score  
 - sections（header / content / list / steps / code）
 
-## ● 処理フロー  
-1. IntentDetector が質問の意図を判定  
-2. ReasoningLayer が推論構造を決定  
-3. FeatureExtractor が文章特徴量を抽出  
-4. LevelDetector が質問者レベルを推定  
-5. TeacherLayer が回答構造（セクション）を生成  
-6. LLM が最終文章を生成  
-7. UI がカード形式で表示  
+### ● 処理フロー  
+1. **IntentDetector** が質問の意図を判定  
+2. **ReasoningLayer** が推論構造を決定  
+3. **FeatureExtractor** が文章特徴量を抽出  
+4. **LevelDetector** が質問者レベルを推定  
+5. **TeacherLayer** が回答構造（セクション）を生成  
+6. **LLM** が最終文章を生成  
+7. **UI** がカード形式で表示  
 
-# 6. UI の流れ（スクリーンショット）  
-`screenshots/` に格納。
+---
 
-- 初期画面（チュートリアル）  
-- 質問入力  
-- カード表示（header / content / list / steps / code）  
-- 非技術質問時の警告カード  
-- 技術質問時の構造化カード  
+## 6. UI の流れ（スクリーンショット）
 
-# 7. テストで確認した内容（UI の流れに沿った形）
+`screenshots/` に格納されているスクリーンショットは、以下の UI フローを網羅している。
 
-## ① 初期画面  
-- UI が正常に起動し、チュートリアルが表示されること  
-- 入力欄が正しく動作すること  
+### ① 初期画面  
+- ①初期画面（チュートリアル）.png
 
-## ② 質問入力  
-- FastAPI に正しく送信されること  
-- 非技術質問は警告カードが表示されること  
+### ② 質問入力  
+- ②-1質問入力画面.png  
+- ②-2コンソール画面(質問入力時）.png
 
-## ③ Intent 判定  
-- 比較・設計・手順・改善・要約などが正しく分類されること  
-- 技術語彙が正しく検出されること  
+### ③ Intent 判定  
+- ③-1Intent 判定が UI に反映されたカード①.png  
+- ③-2Intent 判定が UI に反映されたカード②.png  
+- ③-3Intent 判定が UI に反映されたカード③.png  
+- ③-4Intent 判定が UI に反映されたカード④.png  
+- ③-5Intent 判定が UI に反映されたカード⑤.png  
 
-## ④ 推論構造生成  
-- Intent に応じて適切な推論テンプレートが選択されること  
-- reasoning_type が正しく UI に反映されること  
+### ④ 推論構造（ReasoningLayer）  
+- 推論構造①（design）.png  
+- 推論構造②（compare）.png  
+- 推論構造③（procedure）.png  
 
-## ⑤ レベル判定  
-- 特徴量抽出が正しく行われること  
-- 初級・中級・上級が妥当な値で返ること  
+### ⑤ 構造化カード（TeacherLayer）  
+※ compare / design / steps の構造化カードはコードベースで動作確認済  
+（スクショ未収録）
 
-## ⑥ カード表示  
-- header / content / list / steps / code が正しく表示されること  
-- セクションが複数ある場合も正しくレンダリングされること  
+---
 
-※ UI の各ステップ（初期画面 → 入力 → Intent 判定 → 推論構造 → レベル判定 → カード表示）が途切れなく動作することで、ユーザーが問題なく技術回答を閲覧できる品質を担保できる。
+## 7. テストで確認した内容（UI の流れに沿った形）
 
-# 8. 使用技術  
+### ① 初期画面  
+- UI が正常に起動し、チュートリアルが表示される  
+
+### ② 質問入力  
+- 入力欄が正常に動作する  
+- FastAPI にリクエストが送信されていることを確認  
+
+### ③ Intent 判定  
+- IntentDetector が質問の意図を正しく分類  
+- Intent カードが UI 上で複数パターン正しく表示される  
+
+### ④ 推論構造  
+- ReasoningLayer が domain に応じた推論構造を生成  
+  - design / compare / procedure の 3 種類を確認  
+  - screenshots に反映済み  
+
+### ⑤ レベル判定  
+- LevelDetector が domain 補正を含めて正しくレベルを判定  
+  - compare → 中級  
+  - design → 中級  
+  - steps → 中級  
+
+### ⑥ 構造化カード生成  
+- TeacherLayer が summary / differences / pros_cons / use_cases / caution など  
+  domain に応じた構造化カードを生成  
+
+---
+
+## 8. 使用技術  
 - Python  
 - FastAPI  
 - BeautifulSoup  
@@ -104,4 +169,85 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 - JavaScript  
 - HTML / CSS  
 - GitHub  
-- VS Code 
+- VS Code  
+
+---
+
+## 9. フォルダ構成  
+
+```text
+/AI_Chat/
+│
+├─ README.md
+├─ 学習まとめ.txt
+│
+├─ screenshots/
+│   ├─ ①初期画面（チュートリアル）.png
+│   ├─ ②-1質問入力画面.png
+│   ├─ ②-2コンソール画面(質問入力時）.png
+│   ├─ ③-1Intent 判定が UI に反映されたカード①.png
+│   ├─ ③-2Intent 判定が UI に反映されたカード②.png
+│   ├─ ③-3Intent 判定が UI に反映されたカード③.png
+│   ├─ ③-4Intent 判定が UI に反映されたカード④.png
+│   ├─ ③-5Intent 判定が UI に反映されたカード⑤.png
+│   ├─ 推論構造①(design).png
+│   ├─ 推論構造②(compare).png
+│   ├─ 推論構造③(procedure).png
+│
+└─ src/
+    ├─ app.py
+    ├─ config.py
+    │
+    ├─ intent_layer/
+    │   ├─ intent_detector.py
+    │   └─ intent_terms.json
+    │
+    ├─ reasoning_layer/
+    │   ├─ reasoning_layer.py
+    │   └─ semantic_axes.json
+    │
+    ├─ ml/
+    │   ├─ feature_extractor.py
+    │   ├─ level_detector_ml.py
+    │   └─ csv_generator.py
+    │
+    ├─ teacher_layer/
+    │   └─ teacher_layer.py
+    │
+    ├─ llm/
+    │   └─ llm_connector.py
+    │
+    ├─ ui/
+    │   └─ app_aitechnicalinfochat.py
+    │
+    └─ utils/
+        ├─ search_query_builder.py
+        └─ self_improvement_cycle.py
+```
+
+---
+
+## 10. 学習まとめ  
+別紙「学習まとめ.txt」に記載。
+
+---
+
+## 11. 参考文献（リンク切れなし）
+
+- FastAPI  
+  [https://fastapi.tiangolo.com/](https://fastapi.tiangolo.com/)  
+- scikit-learn  
+  [https://scikit-learn.org/stable/](https://scikit-learn.org/stable/)  
+- BeautifulSoup4  
+  [https://www.crummy.com/software/BeautifulSoup/bs4/doc/](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)  
+- Python 公式（例外処理）  
+  [https://docs.python.org/3/tutorial/errors.html](https://docs.python.org/3/tutorial/errors.html)  
+- OpenAI API  
+  [https://platform.openai.com/docs/](https://platform.openai.com/docs/)  
+- JSON 仕様  
+  [https://www.json.org/json-en.html](https://www.json.org/json-en.html)  
+- GitHub Docs  
+  [https://docs.github.com/](https://docs.github.com/)  
+
+---
+
