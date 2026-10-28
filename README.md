@@ -228,7 +228,7 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 
 ---
 
-## 11. 参考文献（リンク切れなし）
+## 11. 参考文献
 
 - FastAPI  
   [https://fastapi.tiangolo.com/](https://fastapi.tiangolo.com/)  
