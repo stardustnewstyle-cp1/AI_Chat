@@ -248,13 +248,13 @@ Intent 判定・特徴量抽出・推論テンプレート・教師レイヤー�
 - scikit-learn  
   [https://scikit-learn.org/stable/](https://scikit-learn.org/stable/)  
 - BeautifulSoup4  
-  `https://www.crummy.com/software/BeautifulSoup/bs4/doc/` [(crummy.com in Bing)](https://www.bing.com/search?q="https%3A%2F%2Fwww.crummy.com%2Fsoftware%2FBeautifulSoup%2Fbs4%2Fdoc%2F")  
+  `[[(crummy.com in Bing)](https://www.crummy.com/software/BeautifulSoup/bs4/doc/)
 - Python 公式（例外処理）  
-  `https://docs.python.org/3/tutorial/errors.html` [(docs.python.org in Bing)](https://www.bing.com/search?q="https%3A%2F%2Fdocs.python.org%2F3%2Ftutorial%2Ferrors.html")  
+  `https://docs.python.org/3/tutorial/errors.html`[(docs.python.org in Bing)](https://www.bing.com/search?q="https%3A%2F%2Fdocs.python.org%2F3%2Ftutorial%2Ferrors.html")  
 - OpenAI API  
   [https://platform.openai.com/docs/](https://platform.openai.com/docs/)  
 - JSON 仕様  
-  `https://www.json.org/json-en.html` [(json.org in Bing)](https://www.bing.com/search?q="https%3A%2F%2Fwww.json.org%2Fjson-en.html")  
+  `https://www.json.org/json-en.html` [(https://www.bing.com/search?q="https%3A%2F%2Fwww.json.org%2Fjson-en.html))](https://www.bing.com/search?q="https%3A%2F%2Fwww.json.org%2Fjson-en.html")  
 - GitHub Docs  
   [https://docs.github.com/](https://docs.github.com/)  
 
